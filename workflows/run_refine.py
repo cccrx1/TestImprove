@@ -35,6 +35,7 @@ def main():
         model_kwargs=cfg['model'].get('kwargs', {}),
         unet_name=cfg['refine'].get('unet_name', 'unet-little'),
         unet_kwargs=cfg['refine'].get('unet_kwargs', {'first_channels': 16}),
+        defense_name=cfg['refine'].get('defense_name', 'refine'),
         refine_kwargs=cfg['refine'].get('defense_kwargs', {}),
     )
 
@@ -53,7 +54,7 @@ def main():
         dataset_name=cfg['dataset']['name'],
         model_name=cfg['model']['name'],
         attack_name=cfg['attack']['name'],
-        defense_name='refine',
+        defense_name=cfg['refine'].get('defense_name', 'refine'),
     )
 
     if cfg.get('train_unet', True):

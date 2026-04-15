@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import torch.nn as nn
 
-from core.defenses import REFINE
+from core.defenses import REFINE, REFINE_REC
 from core.models import BaselineMNISTNetwork, ResNet, UNet, UNetLittle
 from core.models import vgg as vgg_models
 try:
@@ -108,7 +108,14 @@ class RefinePipelineConfig:
     model_kwargs: dict = field(default_factory=dict)
     unet_name: str = 'unet-little'
     unet_kwargs: dict = field(default_factory=lambda: {'first_channels': 16})
+    defense_name: str = 'refine'
     refine_kwargs: dict = field(default_factory=dict)
+
+
+DEFENSE_BUILDERS = {
+    'refine': REFINE,
+    'refine_rec': REFINE_REC,
+}
 
 
 def build_model(model_name, num_classes, **model_kwargs):
@@ -145,8 +152,12 @@ def build_refine_defense(config, model=None, unet=None):
 
     refine_kwargs = dict(config.refine_kwargs)
     refine_kwargs.setdefault('num_classes', config.num_classes)
+    defense_name = config.defense_name.lower()
+    if defense_name not in DEFENSE_BUILDERS:
+        supported = ', '.join(sorted(DEFENSE_BUILDERS))
+        raise KeyError(f'Unknown defense: {config.defense_name}. Supported: {supported}.')
 
-    return REFINE(
+    return DEFENSE_BUILDERS[defense_name](
         unet=unet,
         model=model,
         **refine_kwargs,

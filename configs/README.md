@@ -5,6 +5,7 @@ Mapping:
 - `train_clean.template.json` -> `python -m workflows.train_clean --config <path>`
 - `run_attack.template.json` -> `python -m workflows.run_attack --config <path>`
 - `run_refine.template.json` -> `python -m workflows.run_refine --config <path>`
+- For defense variants, set `refine.defense_name`, for example `refine` or `refine_rec`.
 
 Suggested usage:
 
