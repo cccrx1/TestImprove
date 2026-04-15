@@ -3,12 +3,12 @@
   "dataset": {
     "name": "cifar10",
     "root": "./datasets",
-    "download": false
+    "download": true
   },
   "model": {
     "name": "resnet18",
     "kwargs": {},
-    "checkpoint": "./outputs/attacks/cifar10/badnets_resnet18_badnets_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth"
+    "checkpoint": "./example_model/badnets.pth"
   },
   "loss": "cross_entropy",
   "attack": {
