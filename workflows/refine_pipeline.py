@@ -7,9 +7,20 @@ defense objects so later run scripts can stay small and consistent.
 
 from dataclasses import dataclass, field
 
+import torch.nn as nn
+
 from core.defenses import REFINE
 from core.models import BaselineMNISTNetwork, ResNet, UNet, UNetLittle
 from core.models import vgg as vgg_models
+try:
+    from torchvision.models import resnet18 as tv_resnet18
+    from torchvision.models import resnet50 as tv_resnet50
+    from torchvision.models import ResNet18_Weights, ResNet50_Weights
+except ImportError:  # pragma: no cover - handled at runtime
+    tv_resnet18 = None
+    tv_resnet50 = None
+    ResNet18_Weights = None
+    ResNet50_Weights = None
 
 
 def _build_resnet18(num_classes, **kwargs):
@@ -18,6 +29,34 @@ def _build_resnet18(num_classes, **kwargs):
 
 def _build_resnet34(num_classes, **kwargs):
     return ResNet(34, num_classes=num_classes)
+
+
+def _resolve_torchvision_weights(weights, enum_cls):
+    if weights is None or enum_cls is None:
+        return weights
+    if isinstance(weights, str):
+        if weights.upper() == 'DEFAULT':
+            return enum_cls.DEFAULT
+        return getattr(enum_cls, weights)
+    return weights
+
+
+def _build_torchvision_resnet18(num_classes, weights=None, **kwargs):
+    if tv_resnet18 is None:
+        raise ImportError('torchvision is required for torchvision-resnet18.')
+    weights = _resolve_torchvision_weights(weights, ResNet18_Weights)
+    model = tv_resnet18(weights=weights, **kwargs)
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    return model
+
+
+def _build_torchvision_resnet50(num_classes, weights=None, **kwargs):
+    if tv_resnet50 is None:
+        raise ImportError('torchvision is required for torchvision-resnet50.')
+    weights = _resolve_torchvision_weights(weights, ResNet50_Weights)
+    model = tv_resnet50(weights=weights, **kwargs)
+    model.fc = nn.Linear(model.fc.in_features, num_classes)
+    return model
 
 
 def _build_baseline_mnist(num_classes, **kwargs):
@@ -31,6 +70,8 @@ def _build_baseline_mnist(num_classes, **kwargs):
 MODEL_BUILDERS = {
     'resnet18': _build_resnet18,
     'resnet34': _build_resnet34,
+    'torchvision-resnet18': _build_torchvision_resnet18,
+    'torchvision-resnet50': _build_torchvision_resnet50,
     'baseline-mnist': _build_baseline_mnist,
     'vgg11': lambda num_classes, **kwargs: vgg_models.vgg11(num_classes=num_classes, **kwargs),
     'vgg11_bn': lambda num_classes, **kwargs: vgg_models.vgg11_bn(num_classes=num_classes, **kwargs),

@@ -41,6 +41,10 @@ def default_transform(dataset_cfg):
     dataset_name = dataset_cfg['name'].lower()
     transform_steps = []
 
+    resize_shorter = dataset_cfg.get('resize_shorter')
+    if resize_shorter is not None:
+        transform_steps.append(transforms.Resize(resize_shorter))
+
     image_size = dataset_cfg.get('image_size')
     if image_size is not None:
         if isinstance(image_size, int):
@@ -52,6 +56,9 @@ def default_transform(dataset_cfg):
         return transforms.Compose(transform_steps)
 
     transform_steps.append(transforms.ToTensor())
+    normalize = dataset_cfg.get('normalize')
+    if normalize is not None:
+        transform_steps.append(transforms.Normalize(mean=normalize['mean'], std=normalize['std']))
     return transforms.Compose(transform_steps)
 
 

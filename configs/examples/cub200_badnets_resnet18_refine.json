@@ -5,11 +5,26 @@
     "root": "./datasets/cub200",
     "train_subdir": "train",
     "test_subdir": "test",
-    "image_size": 32
+    "resize_shorter": 256,
+    "image_size": 224,
+    "normalize": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ]
+    }
   },
   "model": {
-    "name": "resnet18",
-    "kwargs": {},
+    "name": "torchvision-resnet18",
+    "kwargs": {
+      "weights": "DEFAULT"
+    },
     "checkpoint": "./outputs/attacks/cub200/badnets_resnet18_badnets_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth"
   },
   "loss": "cross_entropy",
@@ -43,9 +58,9 @@
     "save_dir": "outputs",
     "dataset_name": "cub200",
     "attack_name": "badnets",
-    "model_name": "resnet18",
+    "model_name": "torchvision-resnet18",
     "defense_name": "refine",
-    "batch_size": 64,
+    "batch_size": 32,
     "num_workers": 4,
     "epochs": 10,
     "lr": 0.001,

@@ -20,3 +20,5 @@ Notes:
 - `gtsrb` and `cub200` are supported through `ImageFolder` style train/test directories.
 - For folder datasets, you can either provide `train_dir` and `test_dir`, or provide `root` plus `train_subdir` and `test_subdir`.
 - You can set `dataset.image_size` to force a resize before `ToTensor()`.
+- For high-resolution datasets such as `cub200`, prefer `torchvision-resnet18` or `torchvision-resnet50`.
+- You can pass torchvision pretrained weights with `model.kwargs.weights`, for example `"DEFAULT"`.
