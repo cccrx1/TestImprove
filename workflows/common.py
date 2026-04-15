@@ -182,6 +182,8 @@ def complete_schedule(schedule, dataset_name, model_name, attack_name='clean', d
     schedule.setdefault('dataset_name', dataset_name)
     schedule.setdefault('model_name', model_name)
     schedule.setdefault('attack_name', attack_name)
+    if schedule.get('device') == 'GPU':
+        schedule.setdefault('GPU_num', 1)
     if defense_name is not None:
         schedule.setdefault('defense_name', defense_name)
     return schedule
