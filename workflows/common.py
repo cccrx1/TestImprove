@@ -37,16 +37,27 @@ def set_global_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
 
-def default_transform(dataset_name):
-    dataset_name = dataset_name.lower()
+def default_transform(dataset_cfg):
+    dataset_name = dataset_cfg['name'].lower()
+    transform_steps = []
+
+    image_size = dataset_cfg.get('image_size')
+    if image_size is not None:
+        if isinstance(image_size, int):
+            image_size = [image_size, image_size]
+        transform_steps.append(transforms.Resize(tuple(image_size)))
+
     if dataset_name == 'mnist':
-        return transforms.Compose([transforms.ToTensor()])
-    return transforms.Compose([transforms.ToTensor()])
+        transform_steps.append(transforms.ToTensor())
+        return transforms.Compose(transform_steps)
+
+    transform_steps.append(transforms.ToTensor())
+    return transforms.Compose(transform_steps)
 
 
 def load_datasets(dataset_cfg):
     dataset_name = dataset_cfg['name'].lower()
-    transform = default_transform(dataset_name)
+    transform = default_transform(dataset_cfg)
 
     if dataset_name == 'cifar10':
         root = dataset_cfg.get('root', './datasets')
@@ -56,9 +67,16 @@ def load_datasets(dataset_cfg):
         root = dataset_cfg.get('root', './datasets')
         train_dataset = MNIST(root=root, train=True, download=dataset_cfg.get('download', False), transform=transform)
         test_dataset = MNIST(root=root, train=False, download=dataset_cfg.get('download', False), transform=transform)
-    elif dataset_name in ('datasetfolder', 'imagefolder', 'gtsrb', 'tiny-imagenet'):
-        train_dir = dataset_cfg['train_dir']
-        test_dir = dataset_cfg['test_dir']
+    elif dataset_name in ('datasetfolder', 'imagefolder', 'gtsrb', 'tiny-imagenet', 'cub200', 'cub-200', 'cub_200'):
+        if 'train_dir' in dataset_cfg and 'test_dir' in dataset_cfg:
+            train_dir = dataset_cfg['train_dir']
+            test_dir = dataset_cfg['test_dir']
+        else:
+            root = dataset_cfg['root']
+            train_dir = dataset_cfg.get('train_subdir', 'train')
+            test_dir = dataset_cfg.get('test_subdir', 'test')
+            train_dir = osp.join(root, train_dir)
+            test_dir = osp.join(root, test_dir)
         train_dataset = ImageFolder(root=train_dir, transform=transform)
         test_dataset = ImageFolder(root=test_dir, transform=transform)
     else:
