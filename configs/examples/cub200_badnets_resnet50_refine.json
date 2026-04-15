@@ -21,32 +21,32 @@
     }
   },
   "model": {
-    "name": "torchvision-resnet18",
+    "name": "torchvision-resnet50",
     "kwargs": {
       "weights": "DEFAULT"
     },
-    "checkpoint": "./outputs/attacks/cub200/badnets_resnet18_badnets_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth"
+    "checkpoint": "./outputs/attacks/cub200/badnets_torchvision-resnet50_badnets_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth"
   },
   "loss": "cross_entropy",
   "attack": {
     "name": "badnets",
     "kwargs": {
-      "y_target": 0,
-      "poisoned_rate": 0.1,
+      "y_target": 1,
+      "poisoned_rate": 0.05,
       "pattern": null,
       "weight": null,
-      "poisoned_transform_train_index": 0,
-      "poisoned_transform_test_index": 0,
+      "poisoned_transform_train_index": null,
+      "poisoned_transform_test_index": null,
       "poisoned_target_transform_index": 0
     }
   },
   "refine": {
     "unet_name": "unet-little",
     "unet_kwargs": {
-      "first_channels": 16
+      "first_channels": 64
     },
     "defense_kwargs": {
-      "lmd": 0.1,
+      "lmd": 0.05,
       "seed": 0
     }
   },
@@ -58,11 +58,11 @@
     "save_dir": "outputs",
     "dataset_name": "cub200",
     "attack_name": "badnets",
-    "model_name": "torchvision-resnet18",
+    "model_name": "torchvision-resnet50",
     "defense_name": "refine",
-    "batch_size": 32,
+    "batch_size": 16,
     "num_workers": 4,
-    "epochs": 10,
+    "epochs": 15,
     "lr": 0.001,
     "betas": [
       0.9,

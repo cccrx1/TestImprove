@@ -18,8 +18,8 @@
       "poisoned_rate": 0.1,
       "pattern": null,
       "weight": null,
-      "poisoned_transform_train_index": 0,
-      "poisoned_transform_test_index": 0,
+      "poisoned_transform_train_index": null,
+      "poisoned_transform_test_index": null,
       "poisoned_target_transform_index": 0
     }
   },

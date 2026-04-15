@@ -24,6 +24,11 @@ ATTACK_BUILDERS = {
     'wanet': WaNet,
 }
 
+IMAGENET_NORMALIZE = {
+    'mean': [0.485, 0.456, 0.406],
+    'std': [0.229, 0.224, 0.225],
+}
+
 
 def load_json(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -37,9 +42,64 @@ def set_global_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
 
 
-def default_transform(dataset_cfg):
+def _normalized_dataset_name(dataset_cfg):
+    return str(dataset_cfg['name']).strip().lower()
+
+
+def _dataset_image_size(dataset_cfg, default_size=None):
+    image_size = dataset_cfg.get('image_size', default_size)
+    if image_size is None:
+        return None
+    if isinstance(image_size, int):
+        return image_size
+    if isinstance(image_size, (list, tuple)) and len(image_size) == 2 and image_size[0] == image_size[1]:
+        return int(image_size[0])
+    return image_size
+
+
+def _normalize_transform(dataset_cfg):
+    normalize = dataset_cfg.get('normalize')
+    if normalize is not None:
+        return normalize
+    if _normalized_dataset_name(dataset_cfg) in ('cub200', 'cub-200', 'cub_200'):
+        return IMAGENET_NORMALIZE
+    return None
+
+
+def _append_normalize(transform_steps, dataset_cfg):
+    normalize = _normalize_transform(dataset_cfg)
+    if normalize is not None:
+        transform_steps.append(transforms.Normalize(mean=normalize['mean'], std=normalize['std']))
+
+
+def default_transform(dataset_cfg, train=True):
     dataset_name = dataset_cfg['name'].lower()
     transform_steps = []
+
+    if dataset_name == 'mnist':
+        image_size = dataset_cfg.get('image_size')
+        if image_size is not None:
+            if isinstance(image_size, int):
+                image_size = [image_size, image_size]
+            transform_steps.append(transforms.Resize(tuple(image_size)))
+        transform_steps.append(transforms.ToTensor())
+        return transforms.Compose(transform_steps)
+
+    if dataset_name in ('cub200', 'cub-200', 'cub_200'):
+        image_size = _dataset_image_size(dataset_cfg, default_size=224)
+        resize_shorter = dataset_cfg.get('resize_shorter')
+        if resize_shorter is None and isinstance(image_size, int):
+            resize_shorter = int(round(image_size * 1.15))
+        if resize_shorter is not None:
+            transform_steps.append(transforms.Resize((resize_shorter, resize_shorter)))
+        if train:
+            transform_steps.append(transforms.RandomCrop((image_size, image_size)))
+            transform_steps.append(transforms.RandomHorizontalFlip())
+        else:
+            transform_steps.append(transforms.CenterCrop((image_size, image_size)))
+        transform_steps.append(transforms.ToTensor())
+        _append_normalize(transform_steps, dataset_cfg)
+        return transforms.Compose(transform_steps)
 
     resize_shorter = dataset_cfg.get('resize_shorter')
     if resize_shorter is not None:
@@ -51,29 +111,24 @@ def default_transform(dataset_cfg):
             image_size = [image_size, image_size]
         transform_steps.append(transforms.Resize(tuple(image_size)))
 
-    if dataset_name == 'mnist':
-        transform_steps.append(transforms.ToTensor())
-        return transforms.Compose(transform_steps)
-
     transform_steps.append(transforms.ToTensor())
-    normalize = dataset_cfg.get('normalize')
-    if normalize is not None:
-        transform_steps.append(transforms.Normalize(mean=normalize['mean'], std=normalize['std']))
+    _append_normalize(transform_steps, dataset_cfg)
     return transforms.Compose(transform_steps)
 
 
 def load_datasets(dataset_cfg):
     dataset_name = dataset_cfg['name'].lower()
-    transform = default_transform(dataset_cfg)
+    train_transform = default_transform(dataset_cfg, train=True)
+    test_transform = default_transform(dataset_cfg, train=False)
 
     if dataset_name == 'cifar10':
         root = dataset_cfg.get('root', './datasets')
-        train_dataset = CIFAR10(root=root, train=True, download=dataset_cfg.get('download', False), transform=transform)
-        test_dataset = CIFAR10(root=root, train=False, download=dataset_cfg.get('download', False), transform=transform)
+        train_dataset = CIFAR10(root=root, train=True, download=dataset_cfg.get('download', False), transform=train_transform)
+        test_dataset = CIFAR10(root=root, train=False, download=dataset_cfg.get('download', False), transform=test_transform)
     elif dataset_name == 'mnist':
         root = dataset_cfg.get('root', './datasets')
-        train_dataset = MNIST(root=root, train=True, download=dataset_cfg.get('download', False), transform=transform)
-        test_dataset = MNIST(root=root, train=False, download=dataset_cfg.get('download', False), transform=transform)
+        train_dataset = MNIST(root=root, train=True, download=dataset_cfg.get('download', False), transform=train_transform)
+        test_dataset = MNIST(root=root, train=False, download=dataset_cfg.get('download', False), transform=test_transform)
     elif dataset_name in ('datasetfolder', 'imagefolder', 'gtsrb', 'tiny-imagenet', 'cub200', 'cub-200', 'cub_200'):
         if 'train_dir' in dataset_cfg and 'test_dir' in dataset_cfg:
             train_dir = dataset_cfg['train_dir']
@@ -84,8 +139,8 @@ def load_datasets(dataset_cfg):
             test_dir = dataset_cfg.get('test_subdir', 'test')
             train_dir = osp.join(root, train_dir)
             test_dir = osp.join(root, test_dir)
-        train_dataset = ImageFolder(root=train_dir, transform=transform)
-        test_dataset = ImageFolder(root=test_dir, transform=transform)
+        train_dataset = ImageFolder(root=train_dir, transform=train_transform)
+        test_dataset = ImageFolder(root=test_dir, transform=test_transform)
     else:
         raise KeyError(f'Unsupported dataset: {dataset_cfg["name"]}')
 
@@ -97,6 +152,15 @@ def infer_in_channels(dataset):
     if sample.ndim != 3:
         raise ValueError(f'Expected sample image with shape (C, H, W), got {tuple(sample.shape)}.')
     return int(sample.shape[0])
+
+
+def infer_image_size(dataset):
+    sample = dataset[0][0]
+    if sample.ndim != 3:
+        raise ValueError(f'Expected sample image with shape (C, H, W), got {tuple(sample.shape)}.')
+    if sample.shape[-1] != sample.shape[-2]:
+        raise ValueError(f'Expected square image, got {tuple(sample.shape)}.')
+    return int(sample.shape[-1])
 
 
 def build_loss(loss_name):
@@ -127,6 +191,84 @@ def _seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
+
+
+def _find_insert_index(dataset):
+    transform = getattr(dataset, 'transform', None)
+    if transform is None or not hasattr(transform, 'transforms'):
+        return 0
+    for index, item in enumerate(transform.transforms):
+        if isinstance(item, transforms.ToTensor):
+            return index
+    return len(transform.transforms)
+
+
+def resolve_poisoned_transform_indices(train_dataset, test_dataset, attack_kwargs):
+    train_index = attack_kwargs.get('poisoned_transform_train_index')
+    if train_index is None:
+        train_index = _find_insert_index(train_dataset)
+    test_index = attack_kwargs.get('poisoned_transform_test_index')
+    if test_index is None:
+        test_index = _find_insert_index(test_dataset)
+    target_index = attack_kwargs.get('poisoned_target_transform_index')
+    if target_index is None:
+        target_index = 0
+    return train_index, test_index, target_index
+
+
+def build_badnets_pattern(image_size, trigger_size=3, alpha=1.0):
+    pattern = torch.zeros((image_size, image_size), dtype=torch.uint8)
+    pattern[-trigger_size:, -trigger_size:] = 255
+    weight = torch.zeros((image_size, image_size), dtype=torch.float32)
+    weight[-trigger_size:, -trigger_size:] = alpha
+    return pattern, weight
+
+
+def gen_wanet_grid(height, k=4):
+    ins = torch.rand(1, 2, k, k) * 2 - 1
+    ins = ins / torch.mean(torch.abs(ins))
+    noise_grid = nn.functional.interpolate(ins, size=height, mode='bicubic', align_corners=True)
+    noise_grid = noise_grid.permute(0, 2, 3, 1)
+    array1d = torch.linspace(-1, 1, steps=height)
+    x, y = torch.meshgrid(array1d, array1d, indexing='ij')
+    identity_grid = torch.stack((y, x), 2)[None, ...]
+    return identity_grid, noise_grid
+
+
+def prepare_attack_kwargs(name, train_dataset, test_dataset, attack_kwargs):
+    prepared = deepcopy(attack_kwargs)
+    prepared.setdefault('y_target', 0)
+    prepared.setdefault('poisoned_rate', 0.1)
+
+    train_index, test_index, target_index = resolve_poisoned_transform_indices(
+        train_dataset,
+        test_dataset,
+        prepared,
+    )
+    prepared['poisoned_transform_train_index'] = train_index
+    prepared['poisoned_transform_test_index'] = test_index
+    prepared['poisoned_target_transform_index'] = target_index
+
+    image_size = infer_image_size(train_dataset)
+    key = name.lower()
+
+    if key in ('badnets', 'blended'):
+        trigger_size = int(prepared.pop('trigger_size', 3))
+        alpha = 1.0 if key == 'badnets' else float(prepared.pop('blended_alpha', 0.2))
+        if prepared.get('pattern') is None or prepared.get('weight') is None:
+            pattern, weight = build_badnets_pattern(image_size=image_size, trigger_size=trigger_size, alpha=alpha)
+            prepared['pattern'] = pattern
+            prepared['weight'] = weight
+
+    if key == 'wanet':
+        grid_k = int(prepared.pop('grid_k', 4))
+        prepared.setdefault('noise', True)
+        if prepared.get('identity_grid') is None or prepared.get('noise_grid') is None:
+            identity_grid, noise_grid = gen_wanet_grid(height=image_size, k=grid_k)
+            prepared['identity_grid'] = identity_grid
+            prepared['noise_grid'] = noise_grid
+
+    return prepared
 
 
 def train_clean_model(model, train_dataset, test_dataset, loss, schedule):
@@ -240,6 +382,12 @@ def build_attack(name, train_dataset, test_dataset, model, loss, attack_kwargs, 
         supported = ', '.join(sorted(ATTACK_BUILDERS))
         raise KeyError(f'Unsupported attack: {name}. Supported: {supported}.')
     attack_cls = ATTACK_BUILDERS[key]
+    attack_kwargs = prepare_attack_kwargs(
+        key,
+        train_dataset=train_dataset,
+        test_dataset=test_dataset,
+        attack_kwargs=attack_kwargs,
+    )
     return attack_cls(
         train_dataset=train_dataset,
         test_dataset=test_dataset,
