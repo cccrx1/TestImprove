@@ -10,6 +10,7 @@ import os
 import os.path as osp
 import random
 import time
+from copy import deepcopy
 
 import numpy as np
 import torch
@@ -18,7 +19,16 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from .base import Base
-from ..utils import Log, SupConLoss, accuracy, infer_num_classes, resolve_topk
+from ..utils import (
+    Log,
+    SupConLoss,
+    accuracy,
+    build_run_metadata,
+    infer_num_classes,
+    resolve_output_dir,
+    resolve_topk,
+    write_json,
+)
 
 
 class REFINE(Base):
@@ -133,6 +143,9 @@ class REFINE(Base):
             return losses.mean()
 
     def train_unet(self, train_dataset, test_dataset, schedule):
+        schedule = deepcopy(schedule)
+        schedule.setdefault('defense_name', 'refine')
+
         if self.num_classes is None:
             self.num_classes = infer_num_classes(train_dataset)
             self.init_label_shuffle()
@@ -183,10 +196,19 @@ class REFINE(Base):
             schedule['amsgrad']
         )
 
-        work_dir = osp.join(schedule['save_dir'], schedule['experiment_name'] + '_' + time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
-        os.makedirs(work_dir, exist_ok=True)
+        work_dir = resolve_output_dir(schedule, stage='defenses', method_name='refine')
         log = Log(osp.join(work_dir, 'log.txt'))
         torch.save(self.arr_shuffle, os.path.join(work_dir, 'label_shuffle.pth'))
+        write_json(
+            osp.join(work_dir, 'config.json'),
+            build_run_metadata(
+                schedule,
+                stage='defenses',
+                defense_name='refine',
+                output_dir=work_dir,
+                num_classes=self.num_classes,
+            ),
+        )
 
         iteration = 0
         last_time = time.time()
@@ -241,6 +263,14 @@ class REFINE(Base):
 
             if (i + 1) % schedule['test_epoch_interval'] == 0:
                 loss = self._test(test_dataset, device, schedule['batch_size'], schedule['num_workers'])
+                metrics = {
+                    'loss': float(loss),
+                    'epoch': i + 1,
+                    'stage': 'defenses',
+                    'defense_name': 'refine',
+                    'metric': 'train_unet_test_loss',
+                }
+                write_json(osp.join(work_dir, 'metrics.json'), metrics)
                 msg = (
                     "==========Test result on test dataset==========\n" +
                     time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +
@@ -338,9 +368,25 @@ class REFINE(Base):
             dataset (types in support_list): Dataset.
             schedule (dict): Schedule for testing.
         """
-        work_dir = osp.join(schedule['save_dir'], schedule['experiment_name'] + '_' + time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
-        os.makedirs(work_dir, exist_ok=True)
+        schedule = deepcopy(schedule)
+        schedule.setdefault('defense_name', 'refine')
+        work_dir = resolve_output_dir(
+            schedule,
+            stage='defenses',
+            method_name='refine',
+            extra_tag=schedule.get('metric'),
+        )
         log = Log(osp.join(work_dir, 'log.txt'))
+        write_json(
+            osp.join(work_dir, 'config.json'),
+            build_run_metadata(
+                schedule,
+                stage='defenses',
+                defense_name='refine',
+                output_dir=work_dir,
+                num_classes=self.num_classes,
+            ),
+        )
 
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
@@ -397,6 +443,17 @@ class REFINE(Base):
             prec5 = metric_map[top5_k]
             top1_correct = int(round(prec1.item() / 100.0 * total_num))
             top5_correct = int(round(prec5.item() / 100.0 * total_num))
+            metrics = {
+                'stage': 'defenses',
+                'defense_name': 'refine',
+                'metric': schedule['metric'],
+                'top1_correct': top1_correct,
+                'top1_accuracy': top1_correct / total_num,
+                f'top{top5_k}_correct': top5_correct,
+                f'top{top5_k}_accuracy': top5_correct / total_num,
+                'total_num': total_num,
+            }
+            write_json(osp.join(work_dir, 'metrics.json'), metrics)
             msg = (
                 f"==========Test result on {schedule['metric']}==========\n" +
                 time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +
