@@ -352,4 +352,236 @@ This machine has 1 cuda devices, and use 1 of them to train.
 ==========Test result on ASR==========
 [2026-04-15_20:11:11] Top-1 correct / Total: 1022/10000, Top-1 accuracy: 0.1022, Top-5 correct / Total: 3884/10000, Top-5 accuracy: 0.3884, time: 1.158963918685913
 
-(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# 
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# python -m workflows.run_refine --config configs/examples/cifar10_badnets_resnet18_refine.json
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/root/TestImprove/workflows/run_refine.py", line 86, in <module>
+    main()
+  File "/root/TestImprove/workflows/run_refine.py", line 48, in main
+    model.load_state_dict(torch.load(cfg['model']['checkpoint'], map_location='cpu'), strict=False)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torch/serialization.py", line 986, in load
+    with _open_file_like(f, 'rb') as opened_file:
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torch/serialization.py", line 435, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torch/serialization.py", line 416, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: './outputs/attacks/cifar10/badnets_resnet18_badnets_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth'
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# git pull
+remote: Enumerating objects: 11, done.
+remote: Counting objects: 100% (11/11), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 6 (delta 4), reused 6 (delta 4), pack-reused 0 (from 0)
+Unpacking objects: 100% (6/6), 8.37 KiB | 2.79 MiB/s, done.
+From https://github.com/cccrx1/TestImprove
+   610a022..ba6552d  main       -> origin/main
+Updating 610a022..ba6552d
+Fast-forward
+ configs/examples/cifar10_badnets_resnet18_refine.json                       |   2 +-
+ ...211\213\345\212\250\345\220\214\346\255\245\346\226\207\344\273\266.txt" | 242 +++++++++++++++++++++++++++++++++++-
+ 2 files changed, 242 insertions(+), 2 deletions(-)
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# python -m workflows.run_refine --config configs/examples/cifar10_badnets_resnet18_refine.json
+This machine has 1 cuda devices, and use 1 of them to train.
+Total train samples: 50000
+Total test samples: 10000
+Batch size: 64
+iteration every epoch: 781
+Initial learning rate: 0.001
+
+[2026-04-15_20:14:07] Epoch:1/10, iteration:100/781, lr: 0.001, loss: 0.7963687181472778, time: 2.54679799079895
+
+[2026-04-15_20:14:09] Epoch:1/10, iteration:200/781, lr: 0.001, loss: 0.7561166286468506, time: 2.0405306816101074
+
+[2026-04-15_20:14:11] Epoch:1/10, iteration:300/781, lr: 0.001, loss: 0.7617367506027222, time: 1.8047857284545898
+
+[2026-04-15_20:14:12] Epoch:1/10, iteration:400/781, lr: 0.001, loss: 0.7245911359786987, time: 1.725811243057251
+
+[2026-04-15_20:14:14] Epoch:1/10, iteration:500/781, lr: 0.001, loss: 0.6761073470115662, time: 1.406371831893921
+
+[2026-04-15_20:14:15] Epoch:1/10, iteration:600/781, lr: 0.001, loss: 0.6943922638893127, time: 1.403667688369751
+
+[2026-04-15_20:14:17] Epoch:1/10, iteration:700/781, lr: 0.001, loss: 0.6570972204208374, time: 1.6347229480743408
+
+==========Test result on test dataset==========
+[2026-04-15_20:14:20] loss: 0.6682717204093933, time: 3.156397581100464
+
+[2026-04-15_20:14:21] Epoch:2/10, iteration:18/781, lr: 0.001, loss: 0.6745160818099976, time: 3.702681064605713
+
+[2026-04-15_20:14:23] Epoch:2/10, iteration:118/781, lr: 0.001, loss: 0.6300472617149353, time: 1.9501261711120605
+
+[2026-04-15_20:14:24] Epoch:2/10, iteration:218/781, lr: 0.001, loss: 0.637305498123169, time: 1.9162776470184326
+
+[2026-04-15_20:14:26] Epoch:2/10, iteration:318/781, lr: 0.001, loss: 0.6194446086883545, time: 1.8315997123718262
+
+[2026-04-15_20:14:28] Epoch:2/10, iteration:418/781, lr: 0.001, loss: 0.6384406685829163, time: 1.7418537139892578
+
+[2026-04-15_20:14:30] Epoch:2/10, iteration:518/781, lr: 0.001, loss: 0.6727508306503296, time: 1.81313157081604
+
+[2026-04-15_20:14:32] Epoch:2/10, iteration:618/781, lr: 0.001, loss: 0.6076531410217285, time: 1.7850866317749023
+
+[2026-04-15_20:14:33] Epoch:2/10, iteration:718/781, lr: 0.001, loss: 0.5319940447807312, time: 1.8322341442108154
+
+==========Test result on test dataset==========
+[2026-04-15_20:14:36] loss: 0.5895954370498657, time: 2.6753764152526855
+
+[2026-04-15_20:14:37] Epoch:3/10, iteration:36/781, lr: 0.001, loss: 0.5958418846130371, time: 3.4893782138824463
+
+[2026-04-15_20:14:39] Epoch:3/10, iteration:136/781, lr: 0.001, loss: 0.5949244499206543, time: 1.899369478225708
+
+[2026-04-15_20:14:41] Epoch:3/10, iteration:236/781, lr: 0.001, loss: 0.5458550453186035, time: 1.8352806568145752
+
+[2026-04-15_20:14:43] Epoch:3/10, iteration:336/781, lr: 0.001, loss: 0.5861201882362366, time: 1.9775514602661133
+
+[2026-04-15_20:14:45] Epoch:3/10, iteration:436/781, lr: 0.001, loss: 0.5487344861030579, time: 1.9748668670654297
+
+[2026-04-15_20:14:46] Epoch:3/10, iteration:536/781, lr: 0.001, loss: 0.5516147017478943, time: 1.84169340133667
+
+[2026-04-15_20:14:48] Epoch:3/10, iteration:636/781, lr: 0.001, loss: 0.5780317783355713, time: 1.8489503860473633
+
+[2026-04-15_20:14:50] Epoch:3/10, iteration:736/781, lr: 0.001, loss: 0.5799328684806824, time: 1.8294882774353027
+
+==========Test result on test dataset==========
+[2026-04-15_20:14:53] loss: 0.5601671934127808, time: 2.3839917182922363
+
+[2026-04-15_20:14:54] Epoch:4/10, iteration:54/781, lr: 0.001, loss: 0.505225419998169, time: 3.507699489593506
+
+[2026-04-15_20:14:55] Epoch:4/10, iteration:154/781, lr: 0.001, loss: 0.5397965908050537, time: 1.8370692729949951
+
+[2026-04-15_20:14:57] Epoch:4/10, iteration:254/781, lr: 0.001, loss: 0.5760341286659241, time: 1.7847068309783936
+
+[2026-04-15_20:14:59] Epoch:4/10, iteration:354/781, lr: 0.001, loss: 0.5175959467887878, time: 1.819533109664917
+
+[2026-04-15_20:15:01] Epoch:4/10, iteration:454/781, lr: 0.001, loss: 0.5295991897583008, time: 1.8277747631072998
+
+[2026-04-15_20:15:02] Epoch:4/10, iteration:554/781, lr: 0.001, loss: 0.5092223882675171, time: 1.5317201614379883
+
+[2026-04-15_20:15:04] Epoch:4/10, iteration:654/781, lr: 0.001, loss: 0.4618067443370819, time: 1.4729282855987549
+
+[2026-04-15_20:15:06] Epoch:4/10, iteration:754/781, lr: 0.001, loss: 0.5923570394515991, time: 1.78751802444458
+
+==========Test result on test dataset==========
+[2026-04-15_20:15:08] loss: 0.5145856142044067, time: 2.043212890625
+
+[2026-04-15_20:15:09] Epoch:5/10, iteration:72/781, lr: 0.001, loss: 0.5701292753219604, time: 3.5040736198425293
+
+[2026-04-15_20:15:11] Epoch:5/10, iteration:172/781, lr: 0.001, loss: 0.5136700868606567, time: 1.8345656394958496
+
+[2026-04-15_20:15:13] Epoch:5/10, iteration:272/781, lr: 0.001, loss: 0.5370448231697083, time: 1.8179528713226318
+
+[2026-04-15_20:15:15] Epoch:5/10, iteration:372/781, lr: 0.001, loss: 0.4992820620536804, time: 1.7385928630828857
+
+[2026-04-15_20:15:16] Epoch:5/10, iteration:472/781, lr: 0.001, loss: 0.4707750082015991, time: 1.6074657440185547
+
+[2026-04-15_20:15:18] Epoch:5/10, iteration:572/781, lr: 0.001, loss: 0.5306727886199951, time: 1.8570952415466309
+
+[2026-04-15_20:15:20] Epoch:5/10, iteration:672/781, lr: 0.001, loss: 0.5183476209640503, time: 1.8182430267333984
+
+[2026-04-15_20:15:22] Epoch:5/10, iteration:772/781, lr: 0.001, loss: 0.4128298759460449, time: 1.9112751483917236
+
+==========Test result on test dataset==========
+[2026-04-15_20:15:24] loss: 0.5140237212181091, time: 1.726616621017456
+
+[2026-04-15_20:15:25] Epoch:6/10, iteration:90/781, lr: 0.0001, loss: 0.49970579147338867, time: 3.6264727115631104
+
+[2026-04-15_20:15:27] Epoch:6/10, iteration:190/781, lr: 0.0001, loss: 0.41499316692352295, time: 1.9344661235809326
+
+[2026-04-15_20:15:29] Epoch:6/10, iteration:290/781, lr: 0.0001, loss: 0.3710736334323883, time: 1.8684699535369873
+
+[2026-04-15_20:15:31] Epoch:6/10, iteration:390/781, lr: 0.0001, loss: 0.4643932580947876, time: 1.9333677291870117
+
+[2026-04-15_20:15:33] Epoch:6/10, iteration:490/781, lr: 0.0001, loss: 0.4418625831604004, time: 1.9692213535308838
+
+[2026-04-15_20:15:35] Epoch:6/10, iteration:590/781, lr: 0.0001, loss: 0.4157468378543854, time: 1.9474492073059082
+
+[2026-04-15_20:15:37] Epoch:6/10, iteration:690/781, lr: 0.0001, loss: 0.45540958642959595, time: 1.940674066543579
+
+==========Test result on test dataset==========
+[2026-04-15_20:15:40] loss: 0.4525274336338043, time: 3.326129674911499
+
+[2026-04-15_20:15:41] Epoch:7/10, iteration:8/781, lr: 0.0001, loss: 0.5004469752311707, time: 3.621556282043457
+
+[2026-04-15_20:15:43] Epoch:7/10, iteration:108/781, lr: 0.0001, loss: 0.48212307691574097, time: 1.9249606132507324
+
+[2026-04-15_20:15:44] Epoch:7/10, iteration:208/781, lr: 0.0001, loss: 0.39888012409210205, time: 1.9255366325378418
+
+[2026-04-15_20:15:46] Epoch:7/10, iteration:308/781, lr: 0.0001, loss: 0.41401857137680054, time: 1.9086475372314453
+
+[2026-04-15_20:15:48] Epoch:7/10, iteration:408/781, lr: 0.0001, loss: 0.45917317271232605, time: 1.8266725540161133
+
+[2026-04-15_20:15:50] Epoch:7/10, iteration:508/781, lr: 0.0001, loss: 0.41198334097862244, time: 1.8485572338104248
+
+[2026-04-15_20:15:52] Epoch:7/10, iteration:608/781, lr: 0.0001, loss: 0.4845905303955078, time: 1.8294057846069336
+
+[2026-04-15_20:15:54] Epoch:7/10, iteration:708/781, lr: 0.0001, loss: 0.4271101653575897, time: 1.829704761505127
+
+==========Test result on test dataset==========
+[2026-04-15_20:15:57] loss: 0.4488827586174011, time: 2.889127492904663
+
+[2026-04-15_20:15:57] Epoch:8/10, iteration:26/781, lr: 0.0001, loss: 0.43806490302085876, time: 3.4961390495300293
+
+[2026-04-15_20:15:59] Epoch:8/10, iteration:126/781, lr: 0.0001, loss: 0.4016607701778412, time: 1.8239741325378418
+
+[2026-04-15_20:16:01] Epoch:8/10, iteration:226/781, lr: 0.0001, loss: 0.47025880217552185, time: 1.816741704940796
+
+[2026-04-15_20:16:03] Epoch:8/10, iteration:326/781, lr: 0.0001, loss: 0.37158551812171936, time: 1.8253066539764404
+
+[2026-04-15_20:16:04] Epoch:8/10, iteration:426/781, lr: 0.0001, loss: 0.4327055513858795, time: 1.814122200012207
+
+[2026-04-15_20:16:06] Epoch:8/10, iteration:526/781, lr: 0.0001, loss: 0.4093950092792511, time: 1.8311779499053955
+
+[2026-04-15_20:16:08] Epoch:8/10, iteration:626/781, lr: 0.0001, loss: 0.38577359914779663, time: 1.8663110733032227
+
+[2026-04-15_20:16:10] Epoch:8/10, iteration:726/781, lr: 0.0001, loss: 0.440906286239624, time: 1.9085326194763184
+
+==========Test result on test dataset==========
+[2026-04-15_20:16:13] loss: 0.446819931268692, time: 2.629804849624634
+
+[2026-04-15_20:16:14] Epoch:9/10, iteration:44/781, lr: 1e-05, loss: 0.3852720260620117, time: 3.64044189453125
+
+[2026-04-15_20:16:16] Epoch:9/10, iteration:144/781, lr: 1e-05, loss: 0.41227102279663086, time: 1.8930704593658447
+
+[2026-04-15_20:16:18] Epoch:9/10, iteration:244/781, lr: 1e-05, loss: 0.38702714443206787, time: 1.908823013305664
+
+[2026-04-15_20:16:19] Epoch:9/10, iteration:344/781, lr: 1e-05, loss: 0.4333489239215851, time: 1.8465819358825684
+
+[2026-04-15_20:16:21] Epoch:9/10, iteration:444/781, lr: 1e-05, loss: 0.3980596363544464, time: 1.8246643543243408
+
+[2026-04-15_20:16:23] Epoch:9/10, iteration:544/781, lr: 1e-05, loss: 0.44452598690986633, time: 1.8521671295166016
+
+[2026-04-15_20:16:25] Epoch:9/10, iteration:644/781, lr: 1e-05, loss: 0.4114968478679657, time: 1.8231608867645264
+
+[2026-04-15_20:16:27] Epoch:9/10, iteration:744/781, lr: 1e-05, loss: 0.41915857791900635, time: 1.8325927257537842
+
+==========Test result on test dataset==========
+[2026-04-15_20:16:29] loss: 0.445322185754776, time: 2.2531473636627197
+
+[2026-04-15_20:16:30] Epoch:10/10, iteration:62/781, lr: 1e-05, loss: 0.40449002385139465, time: 3.521916389465332
+
+[2026-04-15_20:16:32] Epoch:10/10, iteration:162/781, lr: 1e-05, loss: 0.3729986548423767, time: 1.8296148777008057
+
+[2026-04-15_20:16:34] Epoch:10/10, iteration:262/781, lr: 1e-05, loss: 0.42218172550201416, time: 1.8215982913970947
+
+[2026-04-15_20:16:36] Epoch:10/10, iteration:362/781, lr: 1e-05, loss: 0.42461785674095154, time: 1.8288183212280273
+
+[2026-04-15_20:16:38] Epoch:10/10, iteration:462/781, lr: 1e-05, loss: 0.35070210695266724, time: 1.8304190635681152
+
+[2026-04-15_20:16:39] Epoch:10/10, iteration:562/781, lr: 1e-05, loss: 0.4164716601371765, time: 1.8536314964294434
+
+[2026-04-15_20:16:41] Epoch:10/10, iteration:662/781, lr: 1e-05, loss: 0.42150431871414185, time: 1.9151647090911865
+
+[2026-04-15_20:16:43] Epoch:10/10, iteration:762/781, lr: 1e-05, loss: 0.3972060978412628, time: 1.9690861701965332
+
+==========Test result on test dataset==========
+[2026-04-15_20:16:45] loss: 0.4455537796020508, time: 1.9422657489776611
+
+This machine has 1 cuda devices, and use 1 of them to train.
+==========Test result on clean==========
+[2026-04-15_20:16:46] Top-1 correct / Total: 7962/10000, Top-1 accuracy: 0.7962, Top-5 correct / Total: 9785/10000, Top-5 accuracy: 0.9785, time: 1.1800763607025146
+
+Files already downloaded and verified
+Files already downloaded and verified
+This machine has 1 cuda devices, and use 1 of them to train.
+==========Test result on ASR==========
+[2026-04-15_20:16:49] Top-1 correct / Total: 1054/10000, Top-1 accuracy: 0.1054, Top-5 correct / Total: 4227/10000, Top-5 accuracy: 0.4227, time: 1.1525826454162598
