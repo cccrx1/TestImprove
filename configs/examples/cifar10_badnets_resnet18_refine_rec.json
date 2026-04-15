@@ -3,7 +3,7 @@
   "dataset": {
     "name": "cifar10",
     "root": "./datasets",
-    "download": true
+    "download": false
   },
   "model": {
     "name": "resnet18",

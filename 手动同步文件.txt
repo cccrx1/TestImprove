@@ -1,0 +1,115 @@
++-----------------------------------------------AutoDL-----------------------------------------------------+
+目录说明:
+╔═════════════════╦════════╦════╦═════════════════════════════════════════════════════════════════════════╗
+║目录             ║名称    ║速度║说明                                                                     ║
+╠═════════════════╬════════╬════╬═════════════════════════════════════════════════════════════════════════╣
+║/                ║系 统 盘║一般║实例关机数据不会丢失，可存放代码等。会随保存镜像一起保存。               ║
+║/root/autodl-tmp ║数 据 盘║ 快 ║实例关机数据不会丢失，可存放读写IO要求高的数据。但不会随保存镜像一起保存 ║
+╚═════════════════╩════════╩════╩═════════════════════════════════════════════════════════════════════════╝
+CPU ：16 核心
+内存：60 GB
+GPU ：NVIDIA vGPU-32GB, 1
+存储：
+  系 统 盘/               ：70% 21G/30G
+  数 据 盘/root/autodl-tmp：24% 12G/50G
++----------------------------------------------------------------------------------------------------------+
+*注意: 
+1.系统盘较小请将大的数据存放于数据盘或文件存储中，重置系统时数据盘和文件存储中的数据不受影响
+2.清理系统盘请参考：https://www.autodl.com/docs/qa1/
+3.终端中长期执行命令请使用screen等工具开后台运行，确保程序不受SSH连接中断影响：https://www.autodl.com/docs/daemon/
+(base) root@autodl-container-83b647b69c-c6466ed5:~# cd ./TestImprove/
+(base) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# git pull
+remote: Enumerating objects: 9, done.
+remote: Counting objects: 100% (9/9), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 5 (delta 3), reused 5 (delta 3), pack-reused 0 (from 0)
+Unpacking objects: 100% (5/5), 444 bytes | 444.00 KiB/s, done.
+From https://github.com/cccrx1/TestImprove
+   394141f..44d7d63  main       -> origin/main
+Updating 394141f..44d7d63
+Fast-forward
+ core/attacks/AdaptivePatch.py   |  490 -----------------------------------------------------
+ core/attacks/BAAT.py            |  587 ----------------------------------------------------------------
+ core/attacks/BATT.py            |  468 ---------------------------------------------------
+ core/attacks/Blind.py           |  887 ------------------------------------------------------------------------------------------------
+ core/attacks/IAD.py             |  954 -------------------------------------------------------------------------------------------------------
+ core/attacks/ISSBA.py           | 1149 -----------------------------------------------------------------------------------------------------------------------------
+ core/attacks/LIRA.py            | 1028 ---------------------------------------------------------------------------------------------------------------
+ core/attacks/LabelConsistent.py |  662 ------------------------------------------------------------------------
+ core/attacks/PhysicalBA.py      |  299 ---------------------------------
+ core/attacks/Refool.py          |  562 -------------------------------------------------------------
+ core/attacks/SleeperAgent.py    |  586 ----------------------------------------------------------------
+ core/attacks/TUAP.py            |  832 ------------------------------------------------------------------------------------------
+ core/attacks/__init__.py        |   15 +-
+ 13 files changed, 1 insertion(+), 8518 deletions(-)
+ delete mode 100644 core/attacks/AdaptivePatch.py
+ delete mode 100644 core/attacks/BAAT.py
+ delete mode 100644 core/attacks/BATT.py
+ delete mode 100644 core/attacks/Blind.py
+ delete mode 100644 core/attacks/IAD.py
+ delete mode 100644 core/attacks/ISSBA.py
+ delete mode 100644 core/attacks/LIRA.py
+ delete mode 100644 core/attacks/LabelConsistent.py
+ delete mode 100644 core/attacks/PhysicalBA.py
+ delete mode 100644 core/attacks/Refool.py
+ delete mode 100644 core/attacks/SleeperAgent.py
+ delete mode 100644 core/attacks/TUAP.py
+(base) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# conda activate gtsrb-refine
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# python -m workflows.run_refine --config configs/examples/cifar10_badnets_resnet18_refine_rec.json
+
+Downloading https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to ./datasets/cifar-10-python.tar.gz
+0.9%^C
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/root/TestImprove/workflows/run_refine.py", line 86, in <module>
+    main()
+  File "/root/TestImprove/workflows/run_refine.py", line 27, in main
+    train_dataset, test_dataset = load_datasets(cfg['dataset'])
+  File "/root/TestImprove/workflows/common.py", line 126, in load_datasets
+    train_dataset = CIFAR10(root=root, train=True, download=dataset_cfg.get('download', False), transform=train_transform)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/cifar.py", line 65, in __init__
+    self.download()
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/cifar.py", line 139, in download
+    download_and_extract_archive(self.url, self.root, filename=self.filename, md5=self.tgz_md5)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/utils.py", line 434, in download_and_extract_archive
+    download_url(url, download_root, filename, md5)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/utils.py", line 144, in download_url
+    _urlretrieve(url, fpath)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/utils.py", line 48, in _urlretrieve
+    _save_response_content(iter(lambda: response.read(chunk_size), b""), filename, length=response.length)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/utils.py", line 37, in _save_response_content
+    for chunk in content:
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/site-packages/torchvision/datasets/utils.py", line 48, in <lambda>
+    _save_response_content(iter(lambda: response.read(chunk_size), b""), filename, length=response.length)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/http/client.py", line 471, in read
+    s = self.fp.read(amt)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/socket.py", line 717, in readinto
+    return self._sock.recv_into(b)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/ssl.py", line 1307, in recv_into
+    return self.read(nbytes, buffer)
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/ssl.py", line 1163, in read
+    return self._sslobj.read(len, buffer)
+KeyboardInterrupt
+
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# git pull
+Already up to date.
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# cp ~/autodl-pub/cifar-10/cifar-10-python.tar.gz ~/TestImprove/datasets/
+(gtsrb-refine) root@autodl-container-83b647b69c-c6466ed5:~/TestImprove# python -m workflows.run_refine --config configs/examples/cifar10_badnets_resnet18_refine_rec.json
+Using downloaded and verified file: ./datasets/cifar-10-python.tar.gz
+Extracting ./datasets/cifar-10-python.tar.gz to ./datasets
+Files already downloaded and verified
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/root/miniconda3/envs/gtsrb-refine/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/root/TestImprove/workflows/run_refine.py", line 86, in <module>
+    main()
+  File "/root/TestImprove/workflows/run_refine.py", line 61, in main
+    refine.train_unet(train_dataset, test_dataset, schedule)
+  File "/root/TestImprove/core/defenses/REFINE_REC.py", line 139, in train_unet
+    assert schedule['GPU_num'] > 0, 'GPU_num should be a positive integer'
+KeyError: 'GPU_num'
