@@ -1,0 +1,8 @@
+numpy==1.26.4
+scipy==1.11.4
+pillow==10.4.0
+opencv-python==4.10.0.84
+
+# Install the PyTorch build that matches your server CUDA version.
+# Example for CUDA 12.1:
+# pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
