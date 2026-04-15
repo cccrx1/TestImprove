@@ -17,7 +17,11 @@ env/
 Thumbs.db
 
 # Local experiment outputs
-outputs/
+outputs/*
+!outputs/reports/
+outputs/reports/*
+!outputs/reports/.gitkeep
+!outputs/reports/experiment_results.csv
 results/
 runs/
 artifacts/

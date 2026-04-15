@@ -14,6 +14,12 @@ from workflows.common import (
     set_global_seed,
 )
 from workflows.refine_pipeline import RefinePipelineConfig, build_model, build_refine_defense
+from workflows.reporting import (
+    append_experiment_record,
+    build_refine_record,
+    capture_run_dirs,
+    detect_created_run_dir,
+)
 
 
 def main():
@@ -56,14 +62,28 @@ def main():
         attack_name=cfg['attack']['name'],
         defense_name=cfg['refine'].get('defense_name', 'refine'),
     )
+    method_name = cfg['refine'].get('defense_name', 'refine')
+    train_run_dir = None
+    clean_run_dir = None
+    asr_run_dir = None
 
     if cfg.get('train_unet', True):
+        train_before = capture_run_dirs(schedule, stage='defenses', method_name=method_name)
         refine.train_unet(train_dataset, test_dataset, schedule)
+        train_run_dir = detect_created_run_dir(train_before, schedule, stage='defenses', method_name=method_name)
 
     if cfg.get('eval_clean', True):
         clean_schedule = deepcopy(schedule)
         clean_schedule['metric'] = clean_schedule.get('metric', 'clean')
+        clean_before = capture_run_dirs(clean_schedule, stage='defenses', method_name=method_name, extra_tag=clean_schedule['metric'])
         refine.test(test_dataset, clean_schedule)
+        clean_run_dir = detect_created_run_dir(
+            clean_before,
+            clean_schedule,
+            stage='defenses',
+            method_name=method_name,
+            extra_tag=clean_schedule['metric'],
+        )
 
     if cfg.get('eval_poisoned', True):
         attack_loss = build_loss(cfg.get('loss', 'cross_entropy'))
@@ -79,7 +99,24 @@ def main():
         _, poisoned_test_dataset = attack.get_poisoned_dataset()
         asr_schedule = deepcopy(schedule)
         asr_schedule['metric'] = cfg.get('poisoned_metric', 'ASR')
+        asr_before = capture_run_dirs(asr_schedule, stage='defenses', method_name=method_name, extra_tag=asr_schedule['metric'])
         refine.test(poisoned_test_dataset, asr_schedule)
+        asr_run_dir = detect_created_run_dir(
+            asr_before,
+            asr_schedule,
+            stage='defenses',
+            method_name=method_name,
+            extra_tag=asr_schedule['metric'],
+        )
+
+    record = build_refine_record(
+        cfg,
+        config_path=args.config,
+        train_run_dir=train_run_dir,
+        clean_run_dir=clean_run_dir,
+        asr_run_dir=asr_run_dir,
+    )
+    append_experiment_record(record)
 
 
 if __name__ == '__main__':
