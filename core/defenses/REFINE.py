@@ -1,5 +1,3 @@
-
-
 '''
 This is the implement of pre-processing-based backdoor defense with REFINE proposed in [1].
 
@@ -8,7 +6,6 @@ Reference:
 '''
 
 
-from copy import deepcopy
 import os
 import os.path as osp
 import random
@@ -16,12 +13,12 @@ import time
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
+import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.datasets import CIFAR10, MNIST, DatasetFolder
+from torch.utils.data import DataLoader
 
 from .base import Base
-from ..utils import Log, SupConLoss
+from ..utils import Log, SupConLoss, accuracy, infer_num_classes, resolve_topk
 
 
 class REFINE(Base):
@@ -63,8 +60,10 @@ class REFINE(Base):
         if arr_path is not None:
             self.arr_shuffle = np.array(torch.load(arr_path))
         else:
+            if self.num_classes is None:
+                raise ValueError('num_classes must be provided when arr_path is not specified.')
             self.init_label_shuffle()
-        
+
     def init_label_shuffle(self):
         start = 0
         end = self.num_classes
@@ -78,24 +77,23 @@ class REFINE(Base):
         self.arr_shuffle = arr_shuffle
 
     def label_shuffle(self, label):
-        label_new = torch.zeros_like(label)
-        index = torch.from_numpy(self.arr_shuffle).repeat(label.shape[0], 1).cuda()
-        label_new = label_new.scatter(1, index, label)
-        return label_new
-    
+        index = torch.from_numpy(self.arr_shuffle).to(label.device).repeat(label.shape[0], 1)
+        return torch.zeros_like(label).scatter(1, index, label)
+
     def forward(self, image):
         self.X_adv = torch.clamp(self.unet(image), 0, 1)
-        # self.X_adv = F.normalize(self.X_adv)
         self.Y_adv = self.model(self.X_adv)
         Y_adv = F.softmax(self.Y_adv, 1)
         return self.label_shuffle(Y_adv)
-    
+
     def _seed_worker(self, worker_id):
         worker_seed = torch.initial_seed() % 2**32
         np.random.seed(worker_seed)
         random.seed(worker_seed)
 
-    def _test(self, dataset, device, batch_size=16, num_workers=8, loss_func=torch.nn.BCELoss(reduction='none'), supconloss_func=SupConLoss()):
+    def _test(self, dataset, device, batch_size=16, num_workers=8,
+              loss_func=torch.nn.BCELoss(reduction='none'),
+              supconloss_func=SupConLoss()):
         with torch.no_grad():
             test_loader = DataLoader(
                 dataset,
@@ -117,40 +115,39 @@ class REFINE(Base):
                 batch_img = batch_img.to(device)
 
                 bsz = batch_img.shape[0]
-                # Get the pseudo-labels of images
                 f_logit = self.model(batch_img)
                 f_index = f_logit.argmax(1)
                 f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
 
                 logit = self.forward(batch_img)
 
-                # Calculate the supervised constractive loss
                 features = self.X_adv.view(bsz, -1)
                 features = F.normalize(features, dim=1)
-                f1, f2 = features, features
-                features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
+                features = torch.cat([features.unsqueeze(1), features.unsqueeze(1)], dim=1)
                 supconloss = supconloss_func(features, f_index)
 
                 loss = loss_func(logit, f_label) + self.lmd * supconloss
-
                 losses.append(loss.cpu())
 
             losses = torch.cat(losses, dim=0)
             return losses.mean()
 
     def train_unet(self, train_dataset, test_dataset, schedule):
+        if self.num_classes is None:
+            self.num_classes = infer_num_classes(train_dataset)
+            self.init_label_shuffle()
+
         if 'pretrain' in schedule:
             self.unet.load_state_dict(torch.load(schedule['pretrain']), strict=False)
         if 'arr_path' in schedule:
-            self.arr_shuffle.load_state_dict(torch.load(schedule['arr_path']), strict=False)
+            self.arr_shuffle = np.array(torch.load(schedule['arr_path']))
 
-        # Use GPU
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
                 os.environ['CUDA_VISIBLE_DEVICES'] = schedule['CUDA_VISIBLE_DEVICES']
 
             assert torch.cuda.device_count() > 0, 'This machine has no cuda devices!'
-            assert schedule['GPU_num'] >0, 'GPU_num should be a positive integer'
+            assert schedule['GPU_num'] > 0, 'GPU_num should be a positive integer'
             print(f"This machine has {torch.cuda.device_count()} cuda devices, and use {schedule['GPU_num']} of them to train.")
 
             if schedule['GPU_num'] == 1:
@@ -158,9 +155,6 @@ class REFINE(Base):
             else:
                 gpus = list(range(schedule['GPU_num']))
                 self.unet = nn.DataParallel(self.unet.cuda(), device_ids=gpus, output_device=gpus[0])
-                # TODO: DDP training
-                pass
-        # Use CPU
         else:
             device = torch.device("cpu")
 
@@ -174,29 +168,36 @@ class REFINE(Base):
             worker_init_fn=self._seed_worker
         )
 
-
         self.unet = self.unet.to(device)
         self.unet.train()
         self.model = self.model.to(device)
 
         loss_func = torch.nn.BCELoss(reduction='mean')
         supconloss_func = SupConLoss()
-        optimizer = torch.optim.Adam(self.unet.parameters(), schedule['lr'], schedule['betas'], schedule['eps'], schedule['weight_decay'], schedule['amsgrad'])
+        optimizer = torch.optim.Adam(
+            self.unet.parameters(),
+            schedule['lr'],
+            schedule['betas'],
+            schedule['eps'],
+            schedule['weight_decay'],
+            schedule['amsgrad']
+        )
 
         work_dir = osp.join(schedule['save_dir'], schedule['experiment_name'] + '_' + time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
         os.makedirs(work_dir, exist_ok=True)
         log = Log(osp.join(work_dir, 'log.txt'))
         torch.save(self.arr_shuffle, os.path.join(work_dir, 'label_shuffle.pth'))
 
-        # log and output:
-        # 1. ouput loss and time
-        # 2. test and output statistics
-        # 3. save checkpoint
-
         iteration = 0
         last_time = time.time()
 
-        msg = f"Total train samples: {len(train_dataset)}\nTotal test samples: {len(test_dataset)}\nBatch size: {schedule['batch_size']}\niteration every epoch: {len(train_dataset) // schedule['batch_size']}\nInitial learning rate: {schedule['lr']}\n"
+        msg = (
+            f"Total train samples: {len(train_dataset)}\n"
+            f"Total test samples: {len(test_dataset)}\n"
+            f"Batch size: {schedule['batch_size']}\n"
+            f"iteration every epoch: {len(train_dataset) // schedule['batch_size']}\n"
+            f"Initial learning rate: {schedule['lr']}\n"
+        )
         log(msg)
 
         for i in range(schedule['epochs']):
@@ -204,25 +205,21 @@ class REFINE(Base):
                 schedule['lr'] *= schedule['gamma']
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = schedule['lr']
+
             for batch_id, batch in enumerate(train_loader):
                 batch_img, _ = batch
                 batch_img = batch_img.to(device)
 
                 bsz = batch_img.shape[0]
-                # Get the pseudo-labels of images
                 f_logit = self.model(batch_img)
                 f_index = f_logit.argmax(1)
-                # print('f_logit:', f_logit.shape)
-                # print('f_index:', f_index.shape)
                 f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
 
                 logit = self.forward(batch_img)
 
-                # Calculate the supervised constractive loss
                 features = self.X_adv.view(bsz, -1)
                 features = F.normalize(features, dim=1)
-                f1, f2 = features, features
-                features = torch.cat([f1.unsqueeze(1), f2.unsqueeze(1)], dim=1)
+                features = torch.cat([features.unsqueeze(1), features.unsqueeze(1)], dim=1)
                 supconloss = supconloss_func(features, f_index)
 
                 loss = loss_func(logit, f_label) + self.lmd * supconloss
@@ -234,15 +231,21 @@ class REFINE(Base):
                 iteration += 1
 
                 if iteration % schedule['log_iteration_interval'] == 0:
-                    msg = time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) + f"Epoch:{i+1}/{schedule['epochs']}, iteration:{batch_id + 1}/{len(train_dataset)//schedule['batch_size']}, lr: {schedule['lr']}, loss: {float(loss)}, time: {time.time()-last_time}\n"
+                    msg = (
+                        time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +
+                        f"Epoch:{i+1}/{schedule['epochs']}, iteration:{batch_id + 1}/{len(train_dataset)//schedule['batch_size']}, "
+                        f"lr: {schedule['lr']}, loss: {float(loss)}, time: {time.time()-last_time}\n"
+                    )
                     last_time = time.time()
                     log(msg)
 
             if (i + 1) % schedule['test_epoch_interval'] == 0:
                 loss = self._test(test_dataset, device, schedule['batch_size'], schedule['num_workers'])
-                msg = "==========Test result on test dataset==========\n" + \
-                      time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) + \
-                      f"loss: {loss}, time: {time.time()-last_time}\n"
+                msg = (
+                    "==========Test result on test dataset==========\n" +
+                    time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +
+                    f"loss: {loss}, time: {time.time()-last_time}\n"
+                )
                 log(msg)
 
                 self.unet = self.unet.to(device)
@@ -268,12 +271,13 @@ class REFINE(Base):
         """
         with torch.no_grad():
             self.unet.eval()
+            model_device = next(self.unet.parameters()).device
+            original_device = data.device
             if data.ndim == 3:
-                preprocessed_data = self.unet(data.unsqueeze(0))
+                preprocessed_data = self.unet(data.unsqueeze(0).to(model_device))
                 preprocessed_data = torch.clamp(preprocessed_data, 0, 1)
-                return preprocessed_data[0]
-            else:
-                return torch.clamp(self.unet(data), 0, 1)
+                return preprocessed_data[0].to(original_device)
+            return torch.clamp(self.unet(data.to(model_device)), 0, 1).to(original_device)
 
     def _predict(self, data, device, batch_size):
         with torch.no_grad():
@@ -283,28 +287,23 @@ class REFINE(Base):
             self.model.eval()
             predict_digits = []
             for i in range(data.shape[0] // batch_size):
-                # breakpoint()
                 batch_img = data[i*batch_size:(i+1)*batch_size, ...]
                 batch_img = batch_img.to(device)
                 batch_img = self.forward(batch_img)
-                batch_img = batch_img.cpu()
-                predict_digits.append(batch_img)
+                predict_digits.append(batch_img.cpu())
 
             if data.shape[0] % batch_size != 0:
                 batch_img = data[(data.shape[0] // batch_size) * batch_size:, ...]
                 batch_img = batch_img.to(device)
                 batch_img = self.forward(batch_img)
-                batch_img = batch_img.cpu()
-                predict_digits.append(batch_img)
+                predict_digits.append(batch_img.cpu())
 
-            predict_digits = torch.cat(predict_digits, dim=0)
-            return predict_digits
+            return torch.cat(predict_digits, dim=0)
 
     def predict(self, data, schedule):
         """Apply unet defense method to input data and get the predicts.
 
         Args:
-            model (torch.nn.Module): Network.
             data (torch.Tensor): Input data (between 0.0 and 1.0), shape: (N, C, H, W), dtype: torch.float32.
             schedule (dict): Schedule for predicting.
 
@@ -313,78 +312,56 @@ class REFINE(Base):
         """
         preprocessed_data = self.preprocess(data)
 
-        # Use GPU
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
                 os.environ['CUDA_VISIBLE_DEVICES'] = schedule['CUDA_VISIBLE_DEVICES']
 
             assert torch.cuda.device_count() > 0, 'This machine has no cuda devices!'
-            assert schedule['GPU_num'] >0, 'GPU_num should be a positive integer'
+            assert schedule['GPU_num'] > 0, 'GPU_num should be a positive integer'
             print(f"This machine has {torch.cuda.device_count()} cuda devices, and use {schedule['GPU_num']} of them to train.")
 
             if schedule['GPU_num'] == 1:
                 device = torch.device("cuda:0")
             else:
                 gpus = list(range(schedule['GPU_num']))
-                model = nn.DataParallel(model.cuda(), device_ids=gpus, output_device=gpus[0])
-                # TODO: DDP training
-                pass
-        # Use CPU
+                self.model = nn.DataParallel(self.model.cuda(), device_ids=gpus, output_device=gpus[0])
+                device = torch.device(f"cuda:{gpus[0]}")
         else:
             device = torch.device("cpu")
 
-        return self._predict(model, preprocessed_data, device, schedule['batch_size'], schedule['num_workers'])
+        return self._predict(preprocessed_data, device, schedule['batch_size'])
 
     def test(self, dataset, schedule):
         """Test unet on dataset.
 
         Args:
-            model (torch.nn.Module): Network.
             dataset (types in support_list): Dataset.
             schedule (dict): Schedule for testing.
         """
         work_dir = osp.join(schedule['save_dir'], schedule['experiment_name'] + '_' + time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
         os.makedirs(work_dir, exist_ok=True)
-
-        # print('saving...')
-        # ckpt_model_path = os.path.join(work_dir, 'finetuning_ckpt_epoch_200.pth')
-        # torch.save(model.state_dict(), ckpt_model_path)
-        print('done')    
-        
         log = Log(osp.join(work_dir, 'log.txt'))
-        # Use GPU
+
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
                 os.environ['CUDA_VISIBLE_DEVICES'] = schedule['CUDA_VISIBLE_DEVICES']
 
             assert torch.cuda.device_count() > 0, 'This machine has no cuda devices!'
-            assert schedule['GPU_num'] >0, 'GPU_num should be a positive integer'
+            assert schedule['GPU_num'] > 0, 'GPU_num should be a positive integer'
             print(f"This machine has {torch.cuda.device_count()} cuda devices, and use {schedule['GPU_num']} of them to train.")
 
             if schedule['GPU_num'] == 1:
                 device = torch.device("cuda:0")
             else:
                 gpus = list(range(schedule['GPU_num']))
-                model = nn.DataParallel(model.cuda(), device_ids=gpus, output_device=gpus[0])
-                # TODO: DDP training
-                pass
-        # Use CPU
+                self.model = nn.DataParallel(self.model.cuda(), device_ids=gpus, output_device=gpus[0])
+                device = torch.device(f"cuda:{gpus[0]}")
         else:
             device = torch.device("cpu")
 
-        defense_dataset = deepcopy(dataset)
-        # defense_dataset.transform.transforms.append(transforms.ToPILImage())
-        defense_dataset.transform.transforms.append(self.preprocess)
-        # defense_dataset.transform.transforms.append(transforms.ToTensor())
-
-        if hasattr(defense_dataset, 'poisoned_transform'):
-            # defense_dataset.poisoned_transform.transforms.append(transforms.ToPILImage())
-            defense_dataset.poisoned_transform.transforms.append(self.preprocess)
-            # defense_dataset.poisoned_transform.transforms.append(transforms.ToTensor())
-
         last_time = time.time()
-        batch_size=16
-        num_workers=8
+        batch_size = schedule.get('batch_size', 16)
+        num_workers = schedule.get('num_workers', 8)
         with torch.no_grad():
             test_loader = DataLoader(
                 dataset,
@@ -405,35 +382,26 @@ class REFINE(Base):
             for batch in test_loader:
                 batch_img, batch_label = batch
                 batch_img = batch_img.to(device)
-                batch_img = self.forward(batch_img)
-                batch_img = batch_img.cpu()
-                predict_digits.append(batch_img)
+                predict_digits.append(self.forward(batch_img).cpu())
                 labels.append(batch_label)
 
             predict_digits = torch.cat(predict_digits, dim=0)
             labels = torch.cat(labels, dim=0)
-            
+
             total_num = labels.size(0)
-            prec1, prec5 = accuracy(predict_digits, labels, topk=(1, 5))
+            topk = resolve_topk(predict_digits, topk=(1, 5))
+            metrics = accuracy(predict_digits, labels, topk=topk)
+            metric_map = dict(zip(topk, metrics))
+            prec1 = metric_map[1]
+            top5_k = topk[-1]
+            prec5 = metric_map[top5_k]
             top1_correct = int(round(prec1.item() / 100.0 * total_num))
             top5_correct = int(round(prec5.item() / 100.0 * total_num))
-            msg = f"==========Test result on {schedule['metric']}==========\n" + \
-                    time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) + \
-                    f"Top-1 correct / Total: {top1_correct}/{total_num}, Top-1 accuracy: {top1_correct/total_num}, Top-5 correct / Total: {top5_correct}/{total_num}, Top-5 accuracy: {top5_correct/total_num}, time: {time.time()-last_time}\n"
+            msg = (
+                f"==========Test result on {schedule['metric']}==========\n" +
+                time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +
+                f"Top-1 correct / Total: {top1_correct}/{total_num}, Top-1 accuracy: {top1_correct/total_num}, "
+                f"Top-{top5_k} correct / Total: {top5_correct}/{total_num}, Top-{top5_k} accuracy: {top5_correct/total_num}, "
+                f"time: {time.time()-last_time}\n"
+            )
             log(msg)
-
-
-def accuracy(output, target, topk=(1,)):
-    """Computes the precision@k for the specified values of k"""
-    maxk = max(topk)
-    batch_size = target.size(0)
-
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t()
-    correct = pred.eq(target.view(1, -1).expand_as(pred))
-
-    res = []
-    for k in topk:
-        correct_k = correct[:k].contiguous().view(-1).float().sum(0)
-        res.append(correct_k.mul_(100.0 / batch_size))
-    return res

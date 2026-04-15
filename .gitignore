@@ -1,0 +1,40 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE and local editor settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local experiment outputs
+outputs/
+results/
+runs/
+artifacts/
+logs/
+checkpoints/
+
+# Local datasets and generated assets
+datasets/
+data/
+
+# Local environment and machine-specific config
+.env
+.env.*
+*.local.json
+*.local.yaml
+*.local.yml
+*.local.toml
+
+# Notebook checkpoints
+.ipynb_checkpoints/
