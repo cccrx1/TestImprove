@@ -10,6 +10,7 @@ from workflows.common import (
     set_global_seed,
     train_clean_model,
 )
+from workflows.reporting import append_experiment_record, build_clean_record
 
 
 def main():
@@ -32,7 +33,9 @@ def main():
         attack_name='clean',
     )
 
-    train_clean_model(model, train_dataset, test_dataset, loss, schedule)
+    train_run_dir, _ = train_clean_model(model, train_dataset, test_dataset, loss, schedule)
+    record = build_clean_record(cfg, config_path=args.config, train_run_dir=train_run_dir)
+    append_experiment_record(record)
 
 
 if __name__ == '__main__':

@@ -143,3 +143,42 @@ def build_refine_record(cfg, config_path, train_run_dir=None, clean_run_dir=None
         'defense_kwargs_json': json.dumps(cfg['refine'].get('defense_kwargs', {}), ensure_ascii=False, sort_keys=True),
         'attack_kwargs_json': json.dumps(cfg['attack'].get('kwargs', {}), ensure_ascii=False, sort_keys=True),
     }
+
+
+def build_clean_record(cfg, config_path, train_run_dir=None):
+    train_metrics = load_metrics_from_run_dir(train_run_dir)
+    clean_topk_key = None
+    if train_metrics is not None:
+        clean_topk_key = next(
+            (
+                key
+                for key in train_metrics
+                if key.startswith('top') and key.endswith('_accuracy') and key != 'top1_accuracy'
+            ),
+            None,
+        )
+
+    return {
+        'recorded_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+        'config_path': config_path,
+        'dataset': cfg['dataset']['name'],
+        'attack': 'clean',
+        'model': cfg['model']['name'],
+        'defense': 'clean',
+        'attack_checkpoint': cfg['model'].get('checkpoint', ''),
+        'train_epochs': cfg['schedule'].get('epochs', ''),
+        'batch_size': cfg['schedule'].get('batch_size', ''),
+        'lr': cfg['schedule'].get('lr', ''),
+        'train_run_dir': train_run_dir or '',
+        'clean_run_dir': train_run_dir or '',
+        'asr_run_dir': '',
+        'clean_top1_accuracy': '' if train_metrics is None else train_metrics.get('top1_accuracy', ''),
+        'clean_topk_accuracy': '' if train_metrics is None or clean_topk_key is None else train_metrics.get(clean_topk_key, ''),
+        'asr_top1_accuracy': '',
+        'asr_topk_accuracy': '',
+        'clean_metric_name': 'clean',
+        'asr_metric_name': '',
+        'train_loss': '' if train_metrics is None else train_metrics.get('train_loss', ''),
+        'defense_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
+        'attack_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
+    }
