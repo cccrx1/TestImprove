@@ -376,12 +376,11 @@ class PoisonedCIFAR10(CIFAR10):
 
 
 def CreatePoisonedDataset(benign_dataset, y_target, poisoned_rate, pattern, weight, poisoned_transform_index, poisoned_target_transform_index):
-    class_name = type(benign_dataset)
-    if class_name == DatasetFolder:
+    if isinstance(benign_dataset, DatasetFolder):
         return PoisonedDatasetFolder(benign_dataset, y_target, poisoned_rate, pattern, weight, poisoned_transform_index, poisoned_target_transform_index)
-    elif class_name == MNIST:
+    elif isinstance(benign_dataset, MNIST):
         return PoisonedMNIST(benign_dataset, y_target, poisoned_rate, pattern, weight, poisoned_transform_index, poisoned_target_transform_index)
-    elif class_name == CIFAR10:
+    elif isinstance(benign_dataset, CIFAR10):
         return PoisonedCIFAR10(benign_dataset, y_target, poisoned_rate, pattern, weight, poisoned_transform_index, poisoned_target_transform_index)
     else:
         raise NotImplementedError
