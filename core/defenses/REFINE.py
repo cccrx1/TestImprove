@@ -55,6 +55,7 @@ class REFINE(Base):
                  arr_path=None,
                  num_classes=10,
                  lmd=0.1,
+                 supcon_temperature=0.07,
                  enable_label_shuffle=True,
                  norm_mean=None,
                  norm_std=None,
@@ -68,6 +69,7 @@ class REFINE(Base):
         self.model.eval()
         self.num_classes = num_classes
         self.lmd = lmd
+        self.supcon_temperature = supcon_temperature
         self.enable_label_shuffle = bool(enable_label_shuffle)
         if norm_mean is not None and norm_std is not None:
             self.norm_mean = torch.tensor(norm_mean, dtype=torch.float32).view(1, 3, 1, 1)
@@ -127,6 +129,23 @@ class REFINE(Base):
         y_adv = self.model(self._normalize(x_adv))
         return x_adv, y_adv
 
+    def _augment_view(self, image):
+        if image.size(-1) <= 1:
+            return image
+        flip_mask = (torch.rand(image.size(0), 1, 1, 1, device=image.device) > 0.5)
+        flipped = torch.flip(image, dims=[3])
+        return torch.where(flip_mask, flipped, image)
+
+    def _autocast(self, enabled):
+        if hasattr(torch, 'amp') and hasattr(torch.amp, 'autocast'):
+            return torch.amp.autocast('cuda', enabled=enabled)
+        return torch.cuda.amp.autocast(enabled=enabled)
+
+    def _make_grad_scaler(self, enabled):
+        if hasattr(torch, 'amp') and hasattr(torch.amp, 'GradScaler'):
+            return torch.amp.GradScaler('cuda', enabled=enabled)
+        return torch.cuda.amp.GradScaler(enabled=enabled)
+
     def forward(self, image):
         self.X_adv, self.Y_adv = self._reprogram_and_classify(image)
         Y_adv = F.softmax(self.Y_adv, 1)
@@ -139,8 +158,14 @@ class REFINE(Base):
 
     def _test(self, dataset, device, batch_size=16, num_workers=8,
               loss_func=torch.nn.BCELoss(reduction='none'),
-              supconloss_func=SupConLoss()):
+              supconloss_func=None,
+              amp=False):
         with torch.no_grad():
+            if supconloss_func is None:
+                supconloss_func = SupConLoss(
+                    temperature=self.supcon_temperature,
+                    base_temperature=self.supcon_temperature,
+                )
             test_loader = DataLoader(
                 dataset,
                 batch_size=batch_size,
@@ -160,19 +185,26 @@ class REFINE(Base):
                 batch_img, _ = batch
                 batch_img = batch_img.to(device)
 
-                bsz = batch_img.shape[0]
-                f_logit = self.model(batch_img)
-                f_index = f_logit.argmax(1)
-                f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
+                with self._autocast(enabled=amp):
+                    f_logit = self.model(batch_img)
+                    f_index = f_logit.argmax(1)
+                    f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
 
-                logit = self.forward(batch_img)
+                    logit = self.forward(batch_img)
 
-                features = self.X_adv.view(bsz, -1)
-                features = F.normalize(features, dim=1)
-                features = torch.cat([features.unsqueeze(1), features.unsqueeze(1)], dim=1)
-                supconloss = supconloss_func(features, f_index)
+                    batch_img_aug = self._augment_view(batch_img)
+                    _, y_adv_aug = self._reprogram_and_classify(batch_img_aug)
+                    features = torch.cat(
+                        [
+                            F.normalize(self.Y_adv, dim=1).unsqueeze(1),
+                            F.normalize(y_adv_aug, dim=1).unsqueeze(1),
+                        ],
+                        dim=1,
+                    )
+                    supconloss = supconloss_func(features, f_index)
 
-                loss = loss_func(logit, f_label) + self.lmd * supconloss
+                cls_loss = loss_func(logit.float(), f_label.float())
+                loss = cls_loss + self.lmd * supconloss.float()
                 losses.append(loss.cpu())
 
             losses = torch.cat(losses, dim=0)
@@ -224,7 +256,10 @@ class REFINE(Base):
         self.model = self.model.to(device)
 
         loss_func = torch.nn.BCELoss(reduction='mean')
-        supconloss_func = SupConLoss()
+        supconloss_func = SupConLoss(
+            temperature=self.supcon_temperature,
+            base_temperature=self.supcon_temperature,
+        )
         optimizer = torch.optim.Adam(
             self.unet.parameters(),
             schedule['lr'],
@@ -233,6 +268,8 @@ class REFINE(Base):
             schedule['weight_decay'],
             schedule['amsgrad']
         )
+        use_amp = (device.type == 'cuda') and bool(schedule.get('amp', True))
+        scaler = self._make_grad_scaler(enabled=use_amp)
 
         work_dir = resolve_output_dir(schedule, stage='defenses', method_name='refine')
         log = Log(osp.join(work_dir, 'log.txt'))
@@ -270,23 +307,31 @@ class REFINE(Base):
                 batch_img, _ = batch
                 batch_img = batch_img.to(device)
 
-                bsz = batch_img.shape[0]
-                f_logit = self.model(batch_img)
-                f_index = f_logit.argmax(1)
-                f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
+                with self._autocast(enabled=use_amp):
+                    f_logit = self.model(batch_img)
+                    f_index = f_logit.argmax(1)
+                    f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
 
-                logit = self.forward(batch_img)
+                    logit = self.forward(batch_img)
 
-                features = self.X_adv.view(bsz, -1)
-                features = F.normalize(features, dim=1)
-                features = torch.cat([features.unsqueeze(1), features.unsqueeze(1)], dim=1)
-                supconloss = supconloss_func(features, f_index)
+                    batch_img_aug = self._augment_view(batch_img)
+                    _, y_adv_aug = self._reprogram_and_classify(batch_img_aug)
+                    features = torch.cat(
+                        [
+                            F.normalize(self.Y_adv, dim=1).unsqueeze(1),
+                            F.normalize(y_adv_aug, dim=1).unsqueeze(1),
+                        ],
+                        dim=1,
+                    )
+                    supconloss = supconloss_func(features, f_index)
 
-                loss = loss_func(logit, f_label) + self.lmd * supconloss
+                cls_loss = loss_func(logit.float(), f_label.float())
+                loss = cls_loss + self.lmd * supconloss.float()
 
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
 
                 iteration += 1
 
@@ -300,7 +345,14 @@ class REFINE(Base):
                     log(msg)
 
             if (i + 1) % schedule['test_epoch_interval'] == 0:
-                loss = self._test(test_dataset, device, schedule['batch_size'], schedule['num_workers'])
+                loss = self._test(
+                    test_dataset,
+                    device,
+                    schedule['batch_size'],
+                    schedule['num_workers'],
+                    supconloss_func=supconloss_func,
+                    amp=use_amp,
+                )
                 metrics = {
                     'loss': float(loss),
                     'epoch': i + 1,
@@ -327,6 +379,8 @@ class REFINE(Base):
                 torch.save(self.unet.state_dict(), ckpt_unet_path)
                 self.unet = self.unet.to(device)
                 self.unet.train()
+
+        return work_dir
 
     def preprocess(self, data):
         """Perform unet defense method on data and return the preprocessed data.
