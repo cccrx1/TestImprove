@@ -107,6 +107,58 @@ def append_experiment_record(record, csv_path=REPORT_CSV_PATH):
         writer.writerow(row)
 
 
+def _parse_attack_log_metrics(run_dir):
+    log_path = osp.join(run_dir, 'log.txt')
+    if not osp.isfile(log_path):
+        return {}
+
+    benign = {}
+    poisoned = {}
+    last_train_loss = ''
+    current_stage = None
+    with open(log_path, 'r', encoding='utf-8') as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line:
+                continue
+            if '==========Test result on benign test dataset==========' in line:
+                current_stage = 'benign'
+                continue
+            if '==========Test result on poisoned test dataset==========' in line:
+                current_stage = 'poisoned'
+                continue
+            if 'Epoch:' in line and 'loss:' in line:
+                try:
+                    last_train_loss = float(line.split('loss:')[1].split(',')[0].strip())
+                except Exception:
+                    pass
+            if 'Top-1 correct / Total:' in line and 'Top-1 accuracy:' in line:
+                try:
+                    top1 = float(line.split('Top-1 accuracy:')[1].split(',')[0].strip())
+                    topk_label = line.split('Top-5 correct / Total:')[0]
+                    if 'Top-5 accuracy:' in line:
+                        topk = float(line.split('Top-5 accuracy:')[1].split(',')[0].strip())
+                        topk_eval = 5
+                    else:
+                        topk = ''
+                        topk_eval = ''
+                except Exception:
+                    current_stage = None
+                    continue
+                target = benign if current_stage == 'benign' else poisoned if current_stage == 'poisoned' else None
+                if target is not None:
+                    target['top1_accuracy'] = top1
+                    target['topk_accuracy'] = topk
+                    target['topk_eval'] = topk_eval
+                current_stage = None
+
+    return {
+        'benign': benign,
+        'poisoned': poisoned,
+        'train_loss': last_train_loss,
+    }
+
+
 def build_refine_record(cfg, config_path, train_run_dir=None, clean_run_dir=None, asr_run_dir=None):
     train_metrics = load_metrics_from_run_dir(train_run_dir)
     clean_metrics = load_metrics_from_run_dir(clean_run_dir)
@@ -181,4 +233,35 @@ def build_clean_record(cfg, config_path, train_run_dir=None):
         'train_loss': '' if train_metrics is None else train_metrics.get('train_loss', ''),
         'defense_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
         'attack_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
+    }
+
+
+def build_attack_record(cfg, config_path, train_run_dir=None):
+    parsed = _parse_attack_log_metrics(train_run_dir) if train_run_dir else {}
+    benign = parsed.get('benign', {})
+    poisoned = parsed.get('poisoned', {})
+
+    return {
+        'recorded_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+        'config_path': config_path,
+        'dataset': cfg['dataset']['name'],
+        'attack': cfg['attack']['name'],
+        'model': cfg['model']['name'],
+        'defense': 'attack',
+        'attack_checkpoint': cfg['model'].get('checkpoint', ''),
+        'train_epochs': cfg['schedule'].get('epochs', ''),
+        'batch_size': cfg['schedule'].get('batch_size', ''),
+        'lr': cfg['schedule'].get('lr', ''),
+        'train_run_dir': train_run_dir or '',
+        'clean_run_dir': '',
+        'asr_run_dir': '',
+        'clean_top1_accuracy': benign.get('top1_accuracy', ''),
+        'clean_topk_accuracy': benign.get('topk_accuracy', ''),
+        'asr_top1_accuracy': poisoned.get('top1_accuracy', ''),
+        'asr_topk_accuracy': poisoned.get('topk_accuracy', ''),
+        'clean_metric_name': 'benign_test',
+        'asr_metric_name': 'poisoned_test',
+        'train_loss': parsed.get('train_loss', ''),
+        'defense_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
+        'attack_kwargs_json': json.dumps(cfg['attack'].get('kwargs', {}), ensure_ascii=False, sort_keys=True),
     }

@@ -192,7 +192,10 @@ def complete_schedule(schedule, dataset_name, model_name, attack_name='clean', d
         schedule.setdefault('defense_name', defense_name)
         schedule.setdefault('experiment_name', f'{attack_token}_{model_token}_{defense_token}')
     elif attack_token != 'clean':
-        schedule.setdefault('save_dir', osp.join(save_dir, 'attacks', dataset_token))
+        if schedule.get('save_dir') in (None, '', save_dir):
+            schedule['save_dir'] = osp.join(save_dir, 'attacks', dataset_token)
+        else:
+            schedule.setdefault('save_dir', osp.join(save_dir, 'attacks', dataset_token))
         schedule.setdefault('experiment_name', f'{attack_token}_{model_token}_{attack_token}')
     else:
         schedule.setdefault('save_dir', save_dir)
