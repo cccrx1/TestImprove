@@ -25,7 +25,7 @@
     "kwargs": {
       "weights": "DEFAULT"
     },
-    "checkpoint": "./outputs/REPLACE_WITH_BLENDED_ATTACK_RUN/ckpt_epoch_30.pth"
+    "checkpoint": "./outputs/blended_torchvision-resnet50_blended_2026-04-16_22:50:17/ckpt_epoch_30.pth"
   },
   "loss": "cross_entropy",
   "attack": {
