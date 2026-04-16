@@ -55,6 +55,9 @@ class REFINE(Base):
                  arr_path=None,
                  num_classes=10,
                  lmd=0.1,
+                 enable_label_shuffle=True,
+                 norm_mean=None,
+                 norm_std=None,
                  seed=0,
                  deterministic=False):
         super(REFINE, self).__init__(seed=seed, deterministic=deterministic)
@@ -65,16 +68,28 @@ class REFINE(Base):
         self.model.eval()
         self.num_classes = num_classes
         self.lmd = lmd
+        self.enable_label_shuffle = bool(enable_label_shuffle)
+        if norm_mean is not None and norm_std is not None:
+            self.norm_mean = torch.tensor(norm_mean, dtype=torch.float32).view(1, 3, 1, 1)
+            self.norm_std = torch.tensor(norm_std, dtype=torch.float32).view(1, 3, 1, 1)
+        else:
+            self.norm_mean = None
+            self.norm_std = None
         if pretrain is not None:
             self.unet.load_state_dict(torch.load(pretrain), strict=False)
         if arr_path is not None:
             self.arr_shuffle = np.array(torch.load(arr_path))
+            if not self.enable_label_shuffle:
+                self.arr_shuffle = np.arange(self.num_classes, dtype=np.int64)
         else:
             if self.num_classes is None:
                 raise ValueError('num_classes must be provided when arr_path is not specified.')
             self.init_label_shuffle()
 
     def init_label_shuffle(self):
+        if not self.enable_label_shuffle:
+            self.arr_shuffle = np.arange(self.num_classes, dtype=np.int64)
+            return
         start = 0
         end = self.num_classes
         arr = np.array([i for i in range(self.num_classes)])
@@ -87,12 +102,33 @@ class REFINE(Base):
         self.arr_shuffle = arr_shuffle
 
     def label_shuffle(self, label):
+        if not self.enable_label_shuffle:
+            return label
         index = torch.from_numpy(self.arr_shuffle).to(label.device).repeat(label.shape[0], 1)
         return torch.zeros_like(label).scatter(1, index, label)
 
+    def _denormalize(self, image):
+        if self.norm_mean is None or self.norm_std is None:
+            return image
+        norm_std = self.norm_std.to(image.device)
+        norm_mean = self.norm_mean.to(image.device)
+        return image * norm_std + norm_mean
+
+    def _normalize(self, image):
+        if self.norm_mean is None or self.norm_std is None:
+            return image
+        norm_std = self.norm_std.to(image.device)
+        norm_mean = self.norm_mean.to(image.device)
+        return (image - norm_mean) / norm_std
+
+    def _reprogram_and_classify(self, image):
+        clean_image = self._denormalize(image)
+        x_adv = torch.clamp(self.unet(clean_image), 0, 1)
+        y_adv = self.model(self._normalize(x_adv))
+        return x_adv, y_adv
+
     def forward(self, image):
-        self.X_adv = torch.clamp(self.unet(image), 0, 1)
-        self.Y_adv = self.model(self.X_adv)
+        self.X_adv, self.Y_adv = self._reprogram_and_classify(image)
         Y_adv = F.softmax(self.Y_adv, 1)
         return self.label_shuffle(Y_adv)
 
@@ -154,6 +190,8 @@ class REFINE(Base):
             self.unet.load_state_dict(torch.load(schedule['pretrain']), strict=False)
         if 'arr_path' in schedule:
             self.arr_shuffle = np.array(torch.load(schedule['arr_path']))
+            if not self.enable_label_shuffle:
+                self.arr_shuffle = np.arange(self.num_classes, dtype=np.int64)
 
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
