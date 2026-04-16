@@ -25,7 +25,7 @@
     "kwargs": {
       "weights": "DEFAULT"
     },
-    "checkpoint": "./outputs/clean/cub200/clean_torchvision-resnet50_clean_20260416_114344/ckpt_epoch_30.pth"
+    "checkpoint": "./outputs/clean/cub200/clean_torchvision-resnet50_clean_20260416_185851/ckpt_epoch_50.pth"
   },
   "loss": "cross_entropy",
   "attack": {
@@ -51,13 +51,13 @@
     "model_name": "torchvision-resnet50",
     "batch_size": 16,
     "num_workers": 4,
-    "epochs": 20,
+    "epochs": 30,
     "lr": 0.01,
     "momentum": 0.9,
     "weight_decay": 0.0005,
     "schedule": [
-      10,
-      15
+      15,
+      24
     ],
     "gamma": 0.1,
     "benign_training": false,
