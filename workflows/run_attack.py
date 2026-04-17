@@ -1,4 +1,6 @@
 import argparse
+import os.path as osp
+import torch
 
 from workflows.common import (
     build_attack,
@@ -59,6 +61,13 @@ def main():
             stage='attacks',
             method_name=cfg['attack']['name'],
         )
+        if cfg['attack']['name'].lower() == 'wanet' and train_run_dir:
+            prepared = getattr(attack, 'prepared_attack_kwargs', {})
+            identity_grid = prepared.get('identity_grid')
+            noise_grid = prepared.get('noise_grid')
+            if identity_grid is not None and noise_grid is not None:
+                torch.save(identity_grid.cpu(), osp.join(train_run_dir, 'identity_grid.pth'))
+                torch.save(noise_grid.cpu(), osp.join(train_run_dir, 'noise_grid.pth'))
     if cfg.get('run_test', True):
         attack.test(schedule)
 

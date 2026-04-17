@@ -1,5 +1,6 @@
 import argparse
 from copy import deepcopy
+import os.path as osp
 
 import torch
 
@@ -29,6 +30,20 @@ def main():
 
     cfg = load_json(args.config)
     set_global_seed(cfg.get('seed', 0))
+
+    if cfg.get('attack', {}).get('name', '').lower() == 'wanet':
+        attack_kwargs = cfg.setdefault('attack', {}).setdefault('kwargs', {})
+        if (
+            attack_kwargs.get('identity_grid') is None
+            and attack_kwargs.get('noise_grid') is None
+            and cfg.get('model', {}).get('checkpoint')
+        ):
+            attack_run_dir = osp.dirname(cfg['model']['checkpoint'])
+            identity_grid_path = osp.join(attack_run_dir, 'identity_grid.pth')
+            noise_grid_path = osp.join(attack_run_dir, 'noise_grid.pth')
+            if osp.isfile(identity_grid_path) and osp.isfile(noise_grid_path):
+                attack_kwargs['identity_grid'] = torch.load(identity_grid_path, map_location='cpu')
+                attack_kwargs['noise_grid'] = torch.load(noise_grid_path, map_location='cpu')
 
     train_dataset, test_dataset = load_datasets(cfg['dataset'])
     num_classes = cfg.get('num_classes', infer_num_classes(train_dataset))

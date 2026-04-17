@@ -407,7 +407,7 @@ def build_attack(name, train_dataset, test_dataset, model, loss, attack_kwargs, 
         test_dataset=test_dataset,
         attack_kwargs=attack_kwargs,
     )
-    return attack_cls(
+    attack = attack_cls(
         train_dataset=train_dataset,
         test_dataset=test_dataset,
         model=model,
@@ -415,6 +415,8 @@ def build_attack(name, train_dataset, test_dataset, model, loss, attack_kwargs, 
         schedule=schedule,
         **attack_kwargs,
     )
+    attack.prepared_attack_kwargs = deepcopy(attack_kwargs)
+    return attack
 
 
 def build_model_from_config(model_cfg, num_classes):
