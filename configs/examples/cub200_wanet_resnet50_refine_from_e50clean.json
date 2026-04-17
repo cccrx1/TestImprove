@@ -25,7 +25,7 @@
     "kwargs": {
       "weights": "DEFAULT"
     },
-    "checkpoint": "./outputs/wanet_torchvision-resnet50_wanet_2026-04-16_23:04:22/ckpt_epoch_30.pth"
+    "checkpoint": "./outputs/attacks/cub200/wanet_torchvision-resnet50_wanet_2026-04-17_09:21:19/ckpt_epoch_30.pth"
   },
   "loss": "cross_entropy",
   "attack": {
