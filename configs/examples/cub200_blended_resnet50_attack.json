@@ -25,7 +25,7 @@
     "kwargs": {
       "weights": "DEFAULT"
     },
-    "checkpoint": "./outputs/clean/cub200/clean_torchvision-resnet50_clean_20260416_185851/ckpt_epoch_50.pth"
+    "checkpoint": "./outputs/clean/cub200/clean_torchvision-resnet50_clean_20260417_112124/ckpt_epoch_50.pth"
   },
   "loss": "cross_entropy",
   "attack": {
