@@ -45,3 +45,5 @@ data/
 THESIS_LONG_DRAFT.md
 THESIS_TEMPLATE_FILL.md
 THESIS_METHOD_STYLE.md
+organized_experiment_results/*
+.codex
