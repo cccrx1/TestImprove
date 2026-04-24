@@ -1,0 +1,10 @@
+{
+  "defense_name": "refine_gc",
+  "metric": "ASR",
+  "stage": "defenses",
+  "top1_accuracy": 0.1009,
+  "top1_correct": 1009,
+  "top5_accuracy": 0.4591,
+  "top5_correct": 4591,
+  "total_num": 10000
+}

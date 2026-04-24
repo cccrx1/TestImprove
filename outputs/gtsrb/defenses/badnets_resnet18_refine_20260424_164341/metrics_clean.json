@@ -1,0 +1,10 @@
+{
+  "defense_name": "refine",
+  "metric": "clean",
+  "stage": "defenses",
+  "top1_accuracy": 0.9666666666666667,
+  "top1_correct": 12209,
+  "top5_accuracy": 0.9807600950118764,
+  "top5_correct": 12387,
+  "total_num": 12630
+}

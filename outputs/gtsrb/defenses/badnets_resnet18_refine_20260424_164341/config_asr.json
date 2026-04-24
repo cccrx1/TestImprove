@@ -1,0 +1,34 @@
+{
+  "GPU_num": 1,
+  "amsgrad": false,
+  "attack_name": "badnets",
+  "batch_size": 256,
+  "betas": [
+    0.9,
+    0.999
+  ],
+  "dataset_name": "gtsrb",
+  "defense_name": "refine",
+  "device": "GPU",
+  "epochs": 20,
+  "eps": 1e-08,
+  "experiment_name": "badnets_resnet18_refine",
+  "gamma": 0.1,
+  "log_iteration_interval": 100,
+  "lr": 0.001,
+  "metric": "ASR",
+  "model_name": "resnet18",
+  "num_classes": 43,
+  "num_workers": 8,
+  "output_dir": "outputs/gtsrb/defenses/badnets_resnet18_refine_20260424_164341",
+  "run_dir": "outputs/gtsrb/defenses/badnets_resnet18_refine_20260424_164341",
+  "save_dir": "outputs",
+  "save_epoch_interval": 5,
+  "schedule": [
+    10,
+    15
+  ],
+  "stage": "defenses",
+  "test_epoch_interval": 1,
+  "weight_decay": 0.0
+}
