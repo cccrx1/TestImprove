@@ -1,0 +1,2 @@
+==========Test result on clean==========
+[2026-04-24_21:11:11] Top-1 correct / Total: 12125/12630, Top-1 accuracy: 0.9600158353127475, Top-5 correct / Total: 12384/12630, Top-5 accuracy: 0.9805225653206651, time: 1.407109260559082

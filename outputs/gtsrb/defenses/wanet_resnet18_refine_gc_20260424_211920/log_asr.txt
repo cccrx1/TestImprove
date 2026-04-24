@@ -1,0 +1,2 @@
+==========Test result on ASR==========
+[2026-04-24_21:21:47] Top-1 correct / Total: 106/12630, Top-1 accuracy: 0.008392715756136183, Top-5 correct / Total: 3228/12630, Top-5 accuracy: 0.25558194774346793, time: 1.3048207759857178

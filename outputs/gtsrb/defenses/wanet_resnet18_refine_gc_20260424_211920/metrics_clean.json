@@ -1,0 +1,10 @@
+{
+  "defense_name": "refine_gc",
+  "metric": "clean",
+  "stage": "defenses",
+  "top1_accuracy": 0.9661916072842439,
+  "top1_correct": 12203,
+  "top5_accuracy": 0.978147268408551,
+  "top5_correct": 12354,
+  "total_num": 12630
+}
