@@ -223,7 +223,10 @@ class PoisonedDatasetFolder(DatasetFolder):
                  noise_grid,
                  noise,
                  poisoned_transform_index,
-                 poisoned_target_transform_index):
+                 poisoned_target_transform_index,
+                 s=0.5,
+                 grid_rescale=1,
+                 noise_rescale=2):
         super(PoisonedDatasetFolder, self).__init__(
             benign_dataset.root,
             benign_dataset.loader,
@@ -251,9 +254,29 @@ class PoisonedDatasetFolder(DatasetFolder):
         else:
             self.poisoned_transform = copy.deepcopy(self.transform)
             self.poisoned_transform_noise = copy.deepcopy(self.transform) # add noise
-        self.poisoned_transform.transforms.insert(poisoned_transform_index, AddDatasetFolderTrigger(identity_grid, noise_grid,  noise=False))
+        self.poisoned_transform.transforms.insert(
+            poisoned_transform_index,
+            AddDatasetFolderTrigger(
+                identity_grid,
+                noise_grid,
+                noise=False,
+                s=s,
+                grid_rescale=grid_rescale,
+                noise_rescale=noise_rescale,
+            ),
+        )
         #add noise transform
-        self.poisoned_transform_noise.transforms.insert(poisoned_transform_index, AddDatasetFolderTrigger(identity_grid, noise_grid,  noise=True))
+        self.poisoned_transform_noise.transforms.insert(
+            poisoned_transform_index,
+            AddDatasetFolderTrigger(
+                identity_grid,
+                noise_grid,
+                noise=True,
+                s=s,
+                grid_rescale=grid_rescale,
+                noise_rescale=noise_rescale,
+            ),
+        )
 
         # Modify labels
         if self.target_transform is None:
@@ -301,7 +324,10 @@ class PoisonedMNIST(MNIST):
                  noise_grid,
                  noise,
                  poisoned_transform_index,
-                 poisoned_target_transform_index):
+                 poisoned_target_transform_index,
+                 s=0.5,
+                 grid_rescale=1,
+                 noise_rescale=2):
         super(PoisonedMNIST, self).__init__(
             benign_dataset.root,
             benign_dataset.train,
@@ -328,9 +354,29 @@ class PoisonedMNIST(MNIST):
         else:
             self.poisoned_transform = copy.deepcopy(self.transform)
             self.poisoned_transform_noise = copy.deepcopy(self.transform) # add noise
-        self.poisoned_transform.transforms.insert(poisoned_transform_index, AddMNISTTrigger(identity_grid, noise_grid,  noise=False))
+        self.poisoned_transform.transforms.insert(
+            poisoned_transform_index,
+            AddMNISTTrigger(
+                identity_grid,
+                noise_grid,
+                noise=False,
+                s=s,
+                grid_rescale=grid_rescale,
+                noise_rescale=noise_rescale,
+            ),
+        )
         #add noise transform
-        self.poisoned_transform_noise.transforms.insert(poisoned_transform_index, AddMNISTTrigger(identity_grid, noise_grid,  noise=True))
+        self.poisoned_transform_noise.transforms.insert(
+            poisoned_transform_index,
+            AddMNISTTrigger(
+                identity_grid,
+                noise_grid,
+                noise=True,
+                s=s,
+                grid_rescale=grid_rescale,
+                noise_rescale=noise_rescale,
+            ),
+        )
 
         # Modify labels
         if self.target_transform is None:
@@ -373,7 +419,10 @@ class PoisonedCIFAR10(CIFAR10):
                  noise_grid,
                  noise,
                  poisoned_transform_index,
-                 poisoned_target_transform_index):
+                 poisoned_target_transform_index,
+                 s=0.5,
+                 grid_rescale=1,
+                 noise_rescale=2):
         super(PoisonedCIFAR10, self).__init__(
             benign_dataset.root,
             benign_dataset.train,
@@ -400,9 +449,29 @@ class PoisonedCIFAR10(CIFAR10):
         else:
             self.poisoned_transform = copy.deepcopy(self.transform)
             self.poisoned_transform_noise = copy.deepcopy(self.transform) # add noise
-        self.poisoned_transform.transforms.insert(poisoned_transform_index, AddCIFAR10Trigger(identity_grid, noise_grid,  noise=False))
+        self.poisoned_transform.transforms.insert(
+            poisoned_transform_index,
+            AddCIFAR10Trigger(
+                identity_grid,
+                noise_grid,
+                noise=False,
+                s=s,
+                grid_rescale=grid_rescale,
+                noise_rescale=noise_rescale,
+            ),
+        )
         #add noise transform
-        self.poisoned_transform_noise.transforms.insert(poisoned_transform_index, AddCIFAR10Trigger(identity_grid, noise_grid,  noise=True))
+        self.poisoned_transform_noise.transforms.insert(
+            poisoned_transform_index,
+            AddCIFAR10Trigger(
+                identity_grid,
+                noise_grid,
+                noise=True,
+                s=s,
+                grid_rescale=grid_rescale,
+                noise_rescale=noise_rescale,
+            ),
+        )
 
         # Modify labels
         if self.target_transform is None:
@@ -436,13 +505,61 @@ class PoisonedCIFAR10(CIFAR10):
         return img, target
 
 
-def CreatePoisonedDataset(benign_dataset, y_target, poisoned_rate, identity_grid, noise_grid, noise, poisoned_transform_index, poisoned_target_transform_index):
+def CreatePoisonedDataset(
+    benign_dataset,
+    y_target,
+    poisoned_rate,
+    identity_grid,
+    noise_grid,
+    noise,
+    poisoned_transform_index,
+    poisoned_target_transform_index,
+    s=0.5,
+    grid_rescale=1,
+    noise_rescale=2,
+):
     if isinstance(benign_dataset, DatasetFolder):
-        return PoisonedDatasetFolder(benign_dataset, y_target, poisoned_rate, identity_grid, noise_grid, noise, poisoned_transform_index, poisoned_target_transform_index)
+        return PoisonedDatasetFolder(
+            benign_dataset,
+            y_target,
+            poisoned_rate,
+            identity_grid,
+            noise_grid,
+            noise,
+            poisoned_transform_index,
+            poisoned_target_transform_index,
+            s,
+            grid_rescale,
+            noise_rescale,
+        )
     elif isinstance(benign_dataset, MNIST):
-        return PoisonedMNIST(benign_dataset, y_target, poisoned_rate, identity_grid, noise_grid, noise, poisoned_transform_index, poisoned_target_transform_index)
+        return PoisonedMNIST(
+            benign_dataset,
+            y_target,
+            poisoned_rate,
+            identity_grid,
+            noise_grid,
+            noise,
+            poisoned_transform_index,
+            poisoned_target_transform_index,
+            s,
+            grid_rescale,
+            noise_rescale,
+        )
     elif isinstance(benign_dataset, CIFAR10):
-        return PoisonedCIFAR10(benign_dataset, y_target, poisoned_rate, identity_grid, noise_grid, noise, poisoned_transform_index, poisoned_target_transform_index)
+        return PoisonedCIFAR10(
+            benign_dataset,
+            y_target,
+            poisoned_rate,
+            identity_grid,
+            noise_grid,
+            noise,
+            poisoned_transform_index,
+            poisoned_target_transform_index,
+            s,
+            grid_rescale,
+            noise_rescale,
+        )
     else:
         raise NotImplementedError
 
@@ -480,6 +597,9 @@ class WaNet(Base):
                  identity_grid,
                  noise_grid,
                  noise,
+                 s=0.5,
+                 grid_rescale=1,
+                 noise_rescale=2,
                  poisoned_transform_train_index=0,
                  poisoned_transform_test_index=0,
                  poisoned_target_transform_index=0,
@@ -504,7 +624,11 @@ class WaNet(Base):
             noise_grid,
             noise,
             poisoned_transform_train_index,
-            poisoned_target_transform_index)
+            poisoned_target_transform_index,
+            s,
+            grid_rescale,
+            noise_rescale,
+        )
 
         self.poisoned_test_dataset = CreatePoisonedDataset(
             test_dataset,
@@ -514,4 +638,8 @@ class WaNet(Base):
             noise_grid,
             noise,
             poisoned_transform_test_index,
-            poisoned_target_transform_index)
+            poisoned_target_transform_index,
+            s,
+            grid_rescale,
+            noise_rescale,
+        )
