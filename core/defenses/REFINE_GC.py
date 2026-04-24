@@ -20,6 +20,7 @@ from ..utils import (
     infer_num_classes,
     resolve_output_dir,
     resolve_topk,
+    sanitize_name,
     write_json,
 )
 
@@ -208,12 +209,13 @@ class REFINE_GC(Base):
                     f_label = torch.zeros_like(f_logit).to(device).scatter_(1, f_index.view(-1, 1), 1)
 
                     logit = self.forward(batch_img)
-                    batch_img_aug = self._augment_view(batch_img)
-                    _, _, y_adv_aug, _ = self._reprogram_and_classify(batch_img_aug)
+                    bsz = batch_img.shape[0]
+                    features = self.X_adv.view(bsz, -1)
+                    features = F.normalize(features, dim=1)
                     features = torch.cat(
                         [
-                            F.normalize(self.Y_adv, dim=1).unsqueeze(1),
-                            F.normalize(y_adv_aug, dim=1).unsqueeze(1),
+                            features.unsqueeze(1),
+                            features.unsqueeze(1),
                         ],
                         dim=1,
                     )
@@ -328,12 +330,13 @@ class REFINE_GC(Base):
 
                     logit = self.forward(batch_img)
 
-                    batch_img_aug = self._augment_view(batch_img)
-                    _, _, y_adv_aug, _ = self._reprogram_and_classify(batch_img_aug)
+                    bsz = batch_img.shape[0]
+                    features = self.X_adv.view(bsz, -1)
+                    features = F.normalize(features, dim=1)
                     features = torch.cat(
                         [
-                            F.normalize(self.Y_adv, dim=1).unsqueeze(1),
-                            F.normalize(y_adv_aug, dim=1).unsqueeze(1),
+                            features.unsqueeze(1),
+                            features.unsqueeze(1),
                         ],
                         dim=1,
                     )
@@ -374,6 +377,7 @@ class REFINE_GC(Base):
                     'defense_name': 'refine_gc',
                     'metric': 'train_unet_test_loss',
                 }
+                write_json(osp.join(work_dir, 'metrics_train_unet.json'), metrics)
                 write_json(osp.join(work_dir, 'metrics.json'), metrics)
                 msg = (
                     "==========Test result on test dataset==========\n" +
@@ -403,24 +407,14 @@ class REFINE_GC(Base):
     def test(self, dataset, schedule):
         schedule = deepcopy(schedule)
         schedule.setdefault('defense_name', 'refine_gc')
-        work_dir = resolve_output_dir(
+        work_dir = schedule.get('run_dir') or resolve_output_dir(
             schedule,
             stage='defenses',
             method_name='refine_gc',
             extra_tag=schedule.get('metric'),
         )
-        log = Log(osp.join(work_dir, 'log.txt'))
-        write_json(
-            osp.join(work_dir, 'config.json'),
-            build_run_metadata(
-                schedule,
-                stage='defenses',
-                defense_name='refine_gc',
-                output_dir=work_dir,
-                num_classes=self.num_classes,
-            ),
-        )
-
+        metric_tag = sanitize_name(schedule.get('metric', 'test'))
+        log = Log(osp.join(work_dir, f'log_{metric_tag}.txt'))
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
                 os.environ['CUDA_VISIBLE_DEVICES'] = schedule['CUDA_VISIBLE_DEVICES']
@@ -430,6 +424,17 @@ class REFINE_GC(Base):
             device = torch.device("cuda:0")
         else:
             device = torch.device("cpu")
+
+        write_json(
+            osp.join(work_dir, f'config_{metric_tag}.json'),
+            build_run_metadata(
+                schedule,
+                stage='defenses',
+                defense_name='refine_gc',
+                output_dir=work_dir,
+                num_classes=self.num_classes,
+            ),
+        )
 
         last_time = time.time()
         batch_size = schedule.get('batch_size', 16)
@@ -480,7 +485,7 @@ class REFINE_GC(Base):
                 f'top{top5_k}_accuracy': top5_correct / total_num,
                 'total_num': total_num,
             }
-            write_json(osp.join(work_dir, 'metrics.json'), metrics)
+            write_json(osp.join(work_dir, f'metrics_{metric_tag}.json'), metrics)
             msg = (
                 f"==========Test result on {schedule['metric']}==========\n" +
                 time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +

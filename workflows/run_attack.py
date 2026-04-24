@@ -15,8 +15,6 @@ from workflows.common import (
 from workflows.reporting import (
     append_experiment_record,
     build_attack_record,
-    capture_run_dirs,
-    detect_created_run_dir,
 )
 
 
@@ -53,14 +51,8 @@ def main():
 
     train_run_dir = None
     if cfg.get('run_train', True):
-        train_before = capture_run_dirs(schedule, stage='attacks', method_name=cfg['attack']['name'])
-        attack.train(schedule)
-        train_run_dir = detect_created_run_dir(
-            train_before,
-            schedule,
-            stage='attacks',
-            method_name=cfg['attack']['name'],
-        )
+        train_run_dir = attack.train(schedule)
+        schedule['run_dir'] = train_run_dir
         if cfg['attack']['name'].lower() == 'wanet' and train_run_dir:
             prepared = getattr(attack, 'prepared_attack_kwargs', {})
             identity_grid = prepared.get('identity_grid')

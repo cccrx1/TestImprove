@@ -30,13 +30,21 @@ def resolve_output_dir(schedule, stage, method_name=None, extra_tag=None):
 
     timestamp = schedule.setdefault('run_timestamp', time.strftime('%Y%m%d_%H%M%S', time.localtime()))
 
-    run_name_parts = [attack_name, model_name, method_name]
+    stage_name = sanitize_name(stage)
+    if stage_name == 'clean':
+        run_name_parts = [model_name, 'clean']
+    elif stage_name == 'attacks':
+        run_name_parts = [attack_name, model_name]
+    elif stage_name == 'defenses':
+        run_name_parts = [attack_name, model_name, method_name]
+    else:
+        run_name_parts = [method_name, model_name]
     if extra_tag:
         run_name_parts.append(extra_tag)
     run_name_parts.append(timestamp)
     run_name = '_'.join(run_name_parts)
 
-    work_dir = osp.join(base_dir, sanitize_name(stage), dataset_name, run_name)
+    work_dir = osp.join(base_dir, dataset_name, stage_name, run_name)
     os.makedirs(work_dir, exist_ok=True)
     return work_dir
 

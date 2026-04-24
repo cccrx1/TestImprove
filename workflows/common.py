@@ -178,7 +178,6 @@ def maybe_load_weights(model, ckpt_path):
 
 def complete_schedule(schedule, dataset_name, model_name, attack_name='clean', defense_name=None, save_dir='outputs'):
     schedule = deepcopy(schedule)
-    dataset_token = sanitize_name(dataset_name)
     model_token = sanitize_name(model_name)
     attack_token = sanitize_name(attack_name)
 
@@ -192,11 +191,8 @@ def complete_schedule(schedule, dataset_name, model_name, attack_name='clean', d
         schedule.setdefault('defense_name', defense_name)
         schedule.setdefault('experiment_name', f'{attack_token}_{model_token}_{defense_token}')
     elif attack_token != 'clean':
-        if schedule.get('save_dir') in (None, '', save_dir):
-            schedule['save_dir'] = osp.join(save_dir, 'attacks', dataset_token)
-        else:
-            schedule.setdefault('save_dir', osp.join(save_dir, 'attacks', dataset_token))
-        schedule.setdefault('experiment_name', f'{attack_token}_{model_token}_{attack_token}')
+        schedule.setdefault('save_dir', save_dir)
+        schedule.setdefault('experiment_name', f'{attack_token}_{model_token}')
     else:
         schedule.setdefault('save_dir', save_dir)
         schedule.setdefault('experiment_name', f'clean_{model_token}_clean')

@@ -7,15 +7,22 @@ import time
 from core.utils import sanitize_name
 
 
-REPORT_CSV_PATH = osp.join('outputs', 'reports', 'experiment_results.csv')
+REPORT_CSV_PATH = osp.join('outputs', 'reports', 'experiment_summary.csv')
 
 
 def _run_prefix(schedule, stage='defenses', method_name=None, extra_tag=None):
-    del stage
+    stage_name = sanitize_name(stage)
     attack_name = sanitize_name(schedule.get('attack_name'))
     model_name = sanitize_name(schedule.get('model_name'))
     method_name = sanitize_name(method_name or schedule.get('defense_name') or 'unknown')
-    parts = [attack_name, model_name, method_name]
+    if stage_name == 'clean':
+        parts = [model_name, 'clean']
+    elif stage_name == 'attacks':
+        parts = [attack_name, model_name]
+    elif stage_name == 'defenses':
+        parts = [attack_name, model_name, method_name]
+    else:
+        parts = [method_name, model_name]
     if extra_tag is not None:
         parts.append(sanitize_name(extra_tag))
     return '_'.join(parts) + '_'
@@ -24,8 +31,8 @@ def _run_prefix(schedule, stage='defenses', method_name=None, extra_tag=None):
 def _stage_dataset_dir(schedule, stage='defenses'):
     return osp.join(
         schedule.get('save_dir', 'outputs'),
-        sanitize_name(stage),
         sanitize_name(schedule.get('dataset_name')),
+        sanitize_name(stage),
     )
 
 
@@ -65,37 +72,29 @@ def load_json_if_exists(path):
         return json.load(f)
 
 
-def load_metrics_from_run_dir(run_dir):
+def load_metrics_from_run_dir(run_dir, filename='metrics.json'):
     if run_dir is None:
         return None
-    return load_json_if_exists(osp.join(run_dir, 'metrics.json'))
+    return load_json_if_exists(osp.join(run_dir, filename))
 
 
 def append_experiment_record(record, csv_path=REPORT_CSV_PATH):
     os.makedirs(osp.dirname(csv_path), exist_ok=True)
     fieldnames = [
         'recorded_at',
+        'stage',
         'config_path',
         'dataset',
         'attack',
         'model',
         'defense',
-        'attack_checkpoint',
-        'train_epochs',
-        'batch_size',
-        'lr',
-        'train_run_dir',
-        'clean_run_dir',
-        'asr_run_dir',
-        'clean_top1_accuracy',
-        'clean_topk_accuracy',
-        'asr_top1_accuracy',
-        'asr_topk_accuracy',
-        'clean_metric_name',
-        'asr_metric_name',
+        'clean_acc',
+        'asr',
         'train_loss',
-        'defense_kwargs_json',
-        'attack_kwargs_json',
+        'epochs',
+        'seed',
+        'run_dir',
+        'checkpoint',
     ]
 
     exists = osp.isfile(csv_path)
@@ -160,79 +159,56 @@ def _parse_attack_log_metrics(run_dir):
 
 
 def build_refine_record(cfg, config_path, train_run_dir=None, clean_run_dir=None, asr_run_dir=None):
-    train_metrics = load_metrics_from_run_dir(train_run_dir)
-    clean_metrics = load_metrics_from_run_dir(clean_run_dir)
-    asr_metrics = load_metrics_from_run_dir(asr_run_dir)
+    clean_metric_name = cfg['schedule'].get('metric', 'clean')
+    asr_metric_name = cfg.get('poisoned_metric', 'ASR')
+    clean_metrics_file = f"metrics_{sanitize_name(clean_metric_name)}.json"
+    asr_metrics_file = f"metrics_{sanitize_name(asr_metric_name)}.json"
 
-    clean_topk_key = None
-    asr_topk_key = None
-    if clean_metrics is not None:
-        clean_topk_key = next((key for key in clean_metrics if key.startswith('top') and key.endswith('_accuracy') and key != 'top1_accuracy'), None)
-    if asr_metrics is not None:
-        asr_topk_key = next((key for key in asr_metrics if key.startswith('top') and key.endswith('_accuracy') and key != 'top1_accuracy'), None)
+    train_metrics = load_metrics_from_run_dir(train_run_dir, 'metrics_train_unet.json')
+    if train_metrics is None:
+        train_metrics = load_metrics_from_run_dir(train_run_dir)
+    clean_metrics = load_metrics_from_run_dir(clean_run_dir, clean_metrics_file)
+    if clean_metrics is None:
+        clean_metrics = load_metrics_from_run_dir(clean_run_dir)
+    asr_metrics = load_metrics_from_run_dir(asr_run_dir, asr_metrics_file)
+    if asr_metrics is None:
+        asr_metrics = load_metrics_from_run_dir(asr_run_dir)
 
     return {
         'recorded_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+        'stage': 'defense',
         'config_path': config_path,
         'dataset': cfg['dataset']['name'],
         'attack': cfg['attack']['name'],
         'model': cfg['model']['name'],
         'defense': cfg['refine'].get('defense_name', 'refine'),
-        'attack_checkpoint': cfg['model'].get('checkpoint', ''),
-        'train_epochs': cfg['schedule'].get('epochs', ''),
-        'batch_size': cfg['schedule'].get('batch_size', ''),
-        'lr': cfg['schedule'].get('lr', ''),
-        'train_run_dir': train_run_dir or '',
-        'clean_run_dir': clean_run_dir or '',
-        'asr_run_dir': asr_run_dir or '',
-        'clean_top1_accuracy': '' if clean_metrics is None else clean_metrics.get('top1_accuracy', ''),
-        'clean_topk_accuracy': '' if clean_metrics is None or clean_topk_key is None else clean_metrics.get(clean_topk_key, ''),
-        'asr_top1_accuracy': '' if asr_metrics is None else asr_metrics.get('top1_accuracy', ''),
-        'asr_topk_accuracy': '' if asr_metrics is None or asr_topk_key is None else asr_metrics.get(asr_topk_key, ''),
-        'clean_metric_name': '' if clean_metrics is None else clean_metrics.get('metric', ''),
-        'asr_metric_name': '' if asr_metrics is None else asr_metrics.get('metric', ''),
+        'clean_acc': '' if clean_metrics is None else clean_metrics.get('top1_accuracy', ''),
+        'asr': '' if asr_metrics is None else asr_metrics.get('top1_accuracy', ''),
         'train_loss': '' if train_metrics is None else train_metrics.get('loss', ''),
-        'defense_kwargs_json': json.dumps(cfg['refine'].get('defense_kwargs', {}), ensure_ascii=False, sort_keys=True),
-        'attack_kwargs_json': json.dumps(cfg['attack'].get('kwargs', {}), ensure_ascii=False, sort_keys=True),
+        'epochs': cfg['schedule'].get('epochs', ''),
+        'seed': cfg.get('seed', ''),
+        'run_dir': train_run_dir or clean_run_dir or asr_run_dir or '',
+        'checkpoint': cfg['model'].get('checkpoint', ''),
     }
 
 
 def build_clean_record(cfg, config_path, train_run_dir=None):
     train_metrics = load_metrics_from_run_dir(train_run_dir)
-    clean_topk_key = None
-    if train_metrics is not None:
-        clean_topk_key = next(
-            (
-                key
-                for key in train_metrics
-                if key.startswith('top') and key.endswith('_accuracy') and key != 'top1_accuracy'
-            ),
-            None,
-        )
-
     return {
         'recorded_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+        'stage': 'clean',
         'config_path': config_path,
         'dataset': cfg['dataset']['name'],
         'attack': 'clean',
         'model': cfg['model']['name'],
         'defense': 'clean',
-        'attack_checkpoint': cfg['model'].get('checkpoint', ''),
-        'train_epochs': cfg['schedule'].get('epochs', ''),
-        'batch_size': cfg['schedule'].get('batch_size', ''),
-        'lr': cfg['schedule'].get('lr', ''),
-        'train_run_dir': train_run_dir or '',
-        'clean_run_dir': train_run_dir or '',
-        'asr_run_dir': '',
-        'clean_top1_accuracy': '' if train_metrics is None else train_metrics.get('top1_accuracy', ''),
-        'clean_topk_accuracy': '' if train_metrics is None or clean_topk_key is None else train_metrics.get(clean_topk_key, ''),
-        'asr_top1_accuracy': '',
-        'asr_topk_accuracy': '',
-        'clean_metric_name': 'clean',
-        'asr_metric_name': '',
+        'clean_acc': '' if train_metrics is None else train_metrics.get('top1_accuracy', ''),
+        'asr': '',
         'train_loss': '' if train_metrics is None else train_metrics.get('train_loss', ''),
-        'defense_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
-        'attack_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
+        'epochs': cfg['schedule'].get('epochs', ''),
+        'seed': cfg.get('seed', ''),
+        'run_dir': train_run_dir or '',
+        'checkpoint': cfg['model'].get('checkpoint', ''),
     }
 
 
@@ -243,25 +219,17 @@ def build_attack_record(cfg, config_path, train_run_dir=None):
 
     return {
         'recorded_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+        'stage': 'attack',
         'config_path': config_path,
         'dataset': cfg['dataset']['name'],
         'attack': cfg['attack']['name'],
         'model': cfg['model']['name'],
-        'defense': 'attack',
-        'attack_checkpoint': cfg['model'].get('checkpoint', ''),
-        'train_epochs': cfg['schedule'].get('epochs', ''),
-        'batch_size': cfg['schedule'].get('batch_size', ''),
-        'lr': cfg['schedule'].get('lr', ''),
-        'train_run_dir': train_run_dir or '',
-        'clean_run_dir': '',
-        'asr_run_dir': '',
-        'clean_top1_accuracy': benign.get('top1_accuracy', ''),
-        'clean_topk_accuracy': benign.get('topk_accuracy', ''),
-        'asr_top1_accuracy': poisoned.get('top1_accuracy', ''),
-        'asr_topk_accuracy': poisoned.get('topk_accuracy', ''),
-        'clean_metric_name': 'benign_test',
-        'asr_metric_name': 'poisoned_test',
+        'defense': 'none',
+        'clean_acc': benign.get('top1_accuracy', ''),
+        'asr': poisoned.get('top1_accuracy', ''),
         'train_loss': parsed.get('train_loss', ''),
-        'defense_kwargs_json': json.dumps({}, ensure_ascii=False, sort_keys=True),
-        'attack_kwargs_json': json.dumps(cfg['attack'].get('kwargs', {}), ensure_ascii=False, sort_keys=True),
+        'epochs': cfg['schedule'].get('epochs', ''),
+        'seed': cfg.get('seed', ''),
+        'run_dir': train_run_dir or '',
+        'checkpoint': cfg['model'].get('checkpoint', ''),
     }

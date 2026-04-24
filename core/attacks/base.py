@@ -11,7 +11,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision.datasets import DatasetFolder, MNIST, CIFAR10
 
-from ..utils import Log
+from ..utils import Log, resolve_output_dir
 
 
 support_list = (
@@ -125,7 +125,12 @@ class Base(object):
         elif schedule is not None and self.global_schedule is not None:
             self.current_schedule = deepcopy(schedule)
 
-        work_dir = osp.join(self.current_schedule['save_dir'], self.current_schedule['experiment_name'] + '_' + time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
+        work_dir = resolve_output_dir(
+            self.current_schedule,
+            stage='attacks',
+            method_name=self.current_schedule.get('attack_name'),
+        )
+        self.current_schedule['run_dir'] = work_dir
         os.makedirs(work_dir, exist_ok=True)
         log = Log(osp.join(work_dir, 'log.txt'))
 
@@ -270,6 +275,7 @@ class Base(object):
 
         self.model.eval()
         self.model = self.model.cpu()
+        return work_dir
 
     def _test(self, dataset, device, batch_size=16, num_workers=8, model=None, test_loss=None):
         if model is None:
@@ -336,9 +342,14 @@ class Base(object):
             test_dataset = self.test_dataset
             poisoned_test_dataset = self.poisoned_test_dataset
 
-        work_dir = osp.join(self.current_schedule['save_dir'], self.current_schedule['experiment_name'] + '_' + time.strftime("%Y-%m-%d_%H:%M:%S", time.localtime()))
+        work_dir = self.current_schedule.get('run_dir') or resolve_output_dir(
+            self.current_schedule,
+            stage='attacks',
+            method_name=self.current_schedule.get('attack_name'),
+        )
         os.makedirs(work_dir, exist_ok=True)
-        log = Log(osp.join(work_dir, 'log.txt'))
+        log_name = 'log_eval.txt' if self.current_schedule.get('run_dir') else 'log.txt'
+        log = Log(osp.join(work_dir, log_name))
 
         # Use GPU
         if 'device' in self.current_schedule and self.current_schedule['device'] == 'GPU':

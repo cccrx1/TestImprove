@@ -7,6 +7,7 @@ Mapping:
 - `run_refine.template.json` -> `python -m workflows.run_refine --config <path>`
 - For defense variants, set `refine.defense_name`, for example `refine` or `refine_gc`.
 - The repository `requirements.txt` follows the lightweight dependency style used in `BiShe`; install `torch` and `torchvision` separately for your server CUDA environment.
+- Outputs are grouped as `outputs/<dataset>/<clean|attacks|defenses>/<run_name>/`, with a compact summary table at `outputs/reports/experiment_summary.csv`.
 
 Suggested usage:
 

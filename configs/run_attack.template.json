@@ -8,7 +8,7 @@
   "model": {
     "name": "resnet18",
     "kwargs": {},
-    "checkpoint": "./outputs/clean/cifar10/clean_resnet18_clean_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth"
+    "checkpoint": "./outputs/cifar10/clean/resnet18_clean_YYYYMMDD_HHMMSS/ckpt_epoch_20.pth"
   },
   "loss": "cross_entropy",
   "attack": {

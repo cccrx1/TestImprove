@@ -91,14 +91,19 @@ All workflows are driven by JSON config files with these key sections:
 Experiments save to `outputs/` with this hierarchy:
 ```
 outputs/
-├── attacks/{dataset}/{attack}_{model}_{attack}_{timestamp}/
-│   ├── ckpt_epoch_*.pth
-│   ├── identity_grid.pth (WaNet only)
-│   └── noise_grid.pth (WaNet only)
-├── defenses/{dataset}/{defense}_{model}_{attack}_{timestamp}/
-│   └── ckpt_epoch_*.pth
-└── clean/{dataset}/clean_{model}_clean_{timestamp}/
-    └── ckpt_epoch_*.pth
+├── {dataset}/
+│   ├── attacks/{attack}_{model}_{timestamp}/
+│   │   ├── ckpt_epoch_*.pth
+│   │   ├── identity_grid.pth (WaNet only)
+│   │   └── noise_grid.pth (WaNet only)
+│   ├── defenses/{attack}_{model}_{defense}_{timestamp}/
+│   │   ├── ckpt_epoch_*.pth
+│   │   ├── metrics_train_unet.json
+│   │   ├── metrics_clean.json
+│   │   └── metrics_asr.json
+│   └── clean/{model}_clean_{timestamp}/
+│       └── ckpt_epoch_*.pth
+└── reports/experiment_summary.csv
 ```
 
 ## Development Workflow

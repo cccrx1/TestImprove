@@ -27,6 +27,7 @@ from ..utils import (
     infer_num_classes,
     resolve_output_dir,
     resolve_topk,
+    sanitize_name,
     write_json,
 )
 
@@ -192,12 +193,13 @@ class REFINE(Base):
 
                     logit = self.forward(batch_img)
 
-                    batch_img_aug = self._augment_view(batch_img)
-                    _, y_adv_aug = self._reprogram_and_classify(batch_img_aug)
+                    bsz = batch_img.shape[0]
+                    features = self.X_adv.view(bsz, -1)
+                    features = F.normalize(features, dim=1)
                     features = torch.cat(
                         [
-                            F.normalize(self.Y_adv, dim=1).unsqueeze(1),
-                            F.normalize(y_adv_aug, dim=1).unsqueeze(1),
+                            features.unsqueeze(1),
+                            features.unsqueeze(1),
                         ],
                         dim=1,
                     )
@@ -314,12 +316,13 @@ class REFINE(Base):
 
                     logit = self.forward(batch_img)
 
-                    batch_img_aug = self._augment_view(batch_img)
-                    _, y_adv_aug = self._reprogram_and_classify(batch_img_aug)
+                    bsz = batch_img.shape[0]
+                    features = self.X_adv.view(bsz, -1)
+                    features = F.normalize(features, dim=1)
                     features = torch.cat(
                         [
-                            F.normalize(self.Y_adv, dim=1).unsqueeze(1),
-                            F.normalize(y_adv_aug, dim=1).unsqueeze(1),
+                            features.unsqueeze(1),
+                            features.unsqueeze(1),
                         ],
                         dim=1,
                     )
@@ -360,6 +363,7 @@ class REFINE(Base):
                     'defense_name': 'refine',
                     'metric': 'train_unet_test_loss',
                 }
+                write_json(osp.join(work_dir, 'metrics_train_unet.json'), metrics)
                 write_json(osp.join(work_dir, 'metrics.json'), metrics)
                 msg = (
                     "==========Test result on test dataset==========\n" +
@@ -432,8 +436,6 @@ class REFINE(Base):
         Returns:
             torch.Tensor: The predicts.
         """
-        preprocessed_data = self.preprocess(data)
-
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
                 os.environ['CUDA_VISIBLE_DEVICES'] = schedule['CUDA_VISIBLE_DEVICES']
@@ -451,7 +453,7 @@ class REFINE(Base):
         else:
             device = torch.device("cpu")
 
-        return self._predict(preprocessed_data, device, schedule['batch_size'])
+        return self._predict(data, device, schedule['batch_size'])
 
     def test(self, dataset, schedule):
         """Test unet on dataset.
@@ -462,24 +464,14 @@ class REFINE(Base):
         """
         schedule = deepcopy(schedule)
         schedule.setdefault('defense_name', 'refine')
-        work_dir = resolve_output_dir(
+        work_dir = schedule.get('run_dir') or resolve_output_dir(
             schedule,
             stage='defenses',
             method_name='refine',
             extra_tag=schedule.get('metric'),
         )
-        log = Log(osp.join(work_dir, 'log.txt'))
-        write_json(
-            osp.join(work_dir, 'config.json'),
-            build_run_metadata(
-                schedule,
-                stage='defenses',
-                defense_name='refine',
-                output_dir=work_dir,
-                num_classes=self.num_classes,
-            ),
-        )
-
+        metric_tag = sanitize_name(schedule.get('metric', 'test'))
+        log = Log(osp.join(work_dir, f'log_{metric_tag}.txt'))
         if 'device' in schedule and schedule['device'] == 'GPU':
             if 'CUDA_VISIBLE_DEVICES' in schedule:
                 os.environ['CUDA_VISIBLE_DEVICES'] = schedule['CUDA_VISIBLE_DEVICES']
@@ -496,6 +488,17 @@ class REFINE(Base):
                 device = torch.device(f"cuda:{gpus[0]}")
         else:
             device = torch.device("cpu")
+
+        write_json(
+            osp.join(work_dir, f'config_{metric_tag}.json'),
+            build_run_metadata(
+                schedule,
+                stage='defenses',
+                defense_name='refine',
+                output_dir=work_dir,
+                num_classes=self.num_classes,
+            ),
+        )
 
         last_time = time.time()
         batch_size = schedule.get('batch_size', 16)
@@ -545,7 +548,7 @@ class REFINE(Base):
                 f'top{top5_k}_accuracy': top5_correct / total_num,
                 'total_num': total_num,
             }
-            write_json(osp.join(work_dir, 'metrics.json'), metrics)
+            write_json(osp.join(work_dir, f'metrics_{metric_tag}.json'), metrics)
             msg = (
                 f"==========Test result on {schedule['metric']}==========\n" +
                 time.strftime("[%Y-%m-%d_%H:%M:%S] ", time.localtime()) +
