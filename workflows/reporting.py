@@ -78,6 +78,30 @@ def load_metrics_from_run_dir(run_dir, filename='metrics.json'):
     return load_json_if_exists(osp.join(run_dir, filename))
 
 
+def _output_checkpoint(run_dir, epochs=None, prefix='ckpt_epoch_'):
+    if run_dir is None or not osp.isdir(run_dir):
+        return ''
+    if epochs not in (None, ''):
+        candidate = osp.join(run_dir, f'{prefix}{epochs}.pth')
+        if osp.isfile(candidate):
+            return candidate.replace('\\', '/')
+
+    checkpoints = []
+    for name in os.listdir(run_dir):
+        if not (name.startswith(prefix) and name.endswith('.pth')):
+            continue
+        epoch_text = name[len(prefix):-4]
+        try:
+            epoch = int(epoch_text)
+        except ValueError:
+            continue
+        checkpoints.append((epoch, osp.join(run_dir, name)))
+    if not checkpoints:
+        return ''
+    checkpoints.sort()
+    return checkpoints[-1][1].replace('\\', '/')
+
+
 def append_experiment_record(record, csv_path=REPORT_CSV_PATH):
     os.makedirs(osp.dirname(csv_path), exist_ok=True)
     fieldnames = [
@@ -188,7 +212,7 @@ def build_refine_record(cfg, config_path, train_run_dir=None, clean_run_dir=None
         'epochs': cfg['schedule'].get('epochs', ''),
         'seed': cfg.get('seed', ''),
         'run_dir': train_run_dir or clean_run_dir or asr_run_dir or '',
-        'checkpoint': cfg['model'].get('checkpoint', ''),
+        'checkpoint': _output_checkpoint(train_run_dir, cfg['schedule'].get('epochs', '')),
     }
 
 
@@ -208,7 +232,7 @@ def build_clean_record(cfg, config_path, train_run_dir=None):
         'epochs': cfg['schedule'].get('epochs', ''),
         'seed': cfg.get('seed', ''),
         'run_dir': train_run_dir or '',
-        'checkpoint': cfg['model'].get('checkpoint', ''),
+        'checkpoint': _output_checkpoint(train_run_dir, cfg['schedule'].get('epochs', '')),
     }
 
 
@@ -231,5 +255,5 @@ def build_attack_record(cfg, config_path, train_run_dir=None):
         'epochs': cfg['schedule'].get('epochs', ''),
         'seed': cfg.get('seed', ''),
         'run_dir': train_run_dir or '',
-        'checkpoint': cfg['model'].get('checkpoint', ''),
+        'checkpoint': _output_checkpoint(train_run_dir, cfg['schedule'].get('epochs', '')),
     }
