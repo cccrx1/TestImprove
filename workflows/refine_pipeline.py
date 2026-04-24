@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 
 import torch.nn as nn
 
-from core.defenses import REFINE, REFINE_GC, REFINE_KD, REFINE_REC
+from core.defenses import REFINE, REFINE_GC
 from core.models import BaselineMNISTNetwork, ResNet, UNet, UNetLittle
 from core.models import vgg as vgg_models
 try:
@@ -115,8 +115,6 @@ class RefinePipelineConfig:
 DEFENSE_BUILDERS = {
     'refine': REFINE,
     'refine_gc': REFINE_GC,
-    'refine_kd': REFINE_KD,
-    'refine_rec': REFINE_REC,
 }
 
 

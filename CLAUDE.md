@@ -18,8 +18,6 @@ The codebase follows a modular structure:
 - `core/defenses/`: Defense mechanisms inheriting from `Base` class
   - REFINE: Main defense using UNet-based input transformation
   - REFINE_GC: REFINE with geometric correction
-  - REFINE_KD: REFINE with knowledge distillation
-  - REFINE_REC: REFINE with reconstruction loss
 
 - `core/models/`: Neural network architectures
   - ResNet, VGG variants for CIFAR/MNIST
@@ -77,7 +75,7 @@ All workflows are driven by JSON config files with these key sections:
 - `dataset`: Dataset name (cifar10, mnist, gtsrb, cub200), root path, image_size
 - `model`: Architecture name (resnet18, resnet50, vgg16), kwargs, checkpoint path
 - `attack`: Attack name (badnets, blended, wanet), poisoned_rate, trigger parameters
-- `refine`: Defense variant (refine, refine_gc, refine_kd, refine_rec), UNet config, hyperparameters
+- `refine`: Defense variant (refine, refine_gc), UNet config, hyperparameters
 - `schedule`: Training hyperparameters (epochs, lr, batch_size, device, save_dir)
 
 ### Key Configuration Notes
@@ -85,7 +83,7 @@ All workflows are driven by JSON config files with these key sections:
 - For high-resolution datasets like CUB-200, use `torchvision-resnet50` with ImageNet pretrained weights (`model.kwargs.weights: "DEFAULT"`)
 - Attack triggers are auto-generated if `pattern` and `weight` are null (BadNets/Blended) or if `identity_grid`/`noise_grid` are omitted (WaNet)
 - WaNet grids are saved during attack training and auto-loaded during defense if checkpoint path is provided
-- Defense variants are selected via `refine.defense_name`: `refine`, `refine_gc`, `refine_kd`, `refine_rec`
+- Defense variants are selected via `refine.defense_name`: `refine`, `refine_gc`
 - Folder-based datasets (GTSRB, CUB-200) require either `train_dir`/`test_dir` or `root` + `train_subdir`/`test_subdir`
 
 ## Output Structure
