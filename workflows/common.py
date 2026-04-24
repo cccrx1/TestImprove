@@ -239,6 +239,12 @@ def build_badnets_pattern(image_size, trigger_size=3, alpha=1.0):
     return pattern, weight
 
 
+def default_trigger_size(image_size):
+    if image_size <= 32:
+        return 3
+    return max(3, int(round(image_size * 0.08)))
+
+
 def gen_wanet_grid(height, k=4):
     ins = torch.rand(1, 2, k, k) * 2 - 1
     ins = ins / torch.mean(torch.abs(ins))
@@ -268,7 +274,7 @@ def prepare_attack_kwargs(name, train_dataset, test_dataset, attack_kwargs):
     key = name.lower()
 
     if key in ('badnets', 'blended'):
-        trigger_size = int(prepared.pop('trigger_size', 3))
+        trigger_size = int(prepared.pop('trigger_size', default_trigger_size(image_size)))
         alpha = 1.0 if key == 'badnets' else float(prepared.pop('blended_alpha', 0.2))
         if prepared.get('pattern') is None or prepared.get('weight') is None:
             pattern, weight = build_badnets_pattern(image_size=image_size, trigger_size=trigger_size, alpha=alpha)
