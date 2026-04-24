@@ -17,8 +17,8 @@
   "loss": "cross_entropy",
   "schedule": {
     "save_dir": "outputs",
-    "batch_size": 32,
-    "num_workers": 4,
+    "batch_size": 64,
+    "num_workers": 8,
     "epochs": 50,
     "lr": 0.01,
     "momentum": 0.9,
