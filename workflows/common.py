@@ -331,6 +331,10 @@ def train_clean_model(model, train_dataset, test_dataset, loss, schedule):
 
     last_metrics = {}
     for epoch in range(schedule['epochs']):
+        if epoch in schedule.get('schedule', []):
+            for param_group in optimizer.param_groups:
+                param_group['lr'] *= schedule.get('gamma', 0.1)
+
         model.train()
         running_loss = 0.0
         for images, labels in train_loader:
@@ -354,6 +358,7 @@ def train_clean_model(model, train_dataset, test_dataset, loss, schedule):
             log(
                 f"[{time.strftime('%Y-%m-%d_%H:%M:%S', time.localtime())}] "
                 f"Epoch:{epoch+1}/{schedule['epochs']}, "
+                f"lr:{optimizer.param_groups[0]['lr']}, "
                 f"train_loss:{metrics['train_loss']}, top1:{metrics['top1_accuracy']}, top{metrics['topk_eval']}:{metrics['topk_accuracy']}\n"
             )
             write_json(osp.join(work_dir, 'metrics.json'), metrics)
