@@ -36,8 +36,7 @@
     "batch_size": 64,
     "num_workers": 8,
     "epochs": 30,
-    "lr": 0.0008,
-    "warmup_epoch": 2,
+    "lr": 0.001,
     "momentum": 0.9,
     "weight_decay": 0.0001,
     "schedule": [
