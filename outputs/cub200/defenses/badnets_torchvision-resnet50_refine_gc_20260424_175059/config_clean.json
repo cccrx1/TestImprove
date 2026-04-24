@@ -1,0 +1,34 @@
+{
+  "GPU_num": 1,
+  "amsgrad": false,
+  "attack_name": "badnets",
+  "batch_size": 16,
+  "betas": [
+    0.9,
+    0.999
+  ],
+  "dataset_name": "cub200",
+  "defense_name": "refine_gc",
+  "device": "GPU",
+  "epochs": 15,
+  "eps": 1e-08,
+  "experiment_name": "badnets_torchvision-resnet50_refine_gc",
+  "gamma": 0.1,
+  "log_iteration_interval": 100,
+  "lr": 0.001,
+  "metric": "clean",
+  "model_name": "torchvision-resnet50",
+  "num_classes": 200,
+  "num_workers": 4,
+  "output_dir": "outputs/cub200/defenses/badnets_torchvision-resnet50_refine_gc_20260424_175059",
+  "run_dir": "outputs/cub200/defenses/badnets_torchvision-resnet50_refine_gc_20260424_175059",
+  "save_dir": "outputs",
+  "save_epoch_interval": 5,
+  "schedule": [
+    5,
+    8
+  ],
+  "stage": "defenses",
+  "test_epoch_interval": 1,
+  "weight_decay": 0.0
+}
