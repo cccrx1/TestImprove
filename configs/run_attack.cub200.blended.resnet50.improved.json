@@ -19,9 +19,9 @@
     "name": "blended",
     "kwargs": {
       "y_target": 0,
-      "poisoned_rate": 0.25,
-      "trigger_size": 48,
-      "blended_alpha": 0.12,
+      "poisoned_rate": 0.3,
+      "trigger_size": 54,
+      "blended_alpha": 0.18,
       "pattern": null,
       "weight": null,
       "poisoned_transform_train_index": null,
@@ -36,7 +36,7 @@
     "batch_size": 64,
     "num_workers": 8,
     "epochs": 30,
-    "lr": 0.0003,
+    "lr": 0.001,
     "momentum": 0.9,
     "weight_decay": 0.0001,
     "schedule": [
