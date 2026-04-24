@@ -19,8 +19,8 @@
     "name": "badnets",
     "kwargs": {
       "y_target": 0,
-      "poisoned_rate": 0.1,
-      "trigger_size": 18,
+      "poisoned_rate": 0.2,
+      "trigger_size": 32,
       "pattern": null,
       "weight": null,
       "poisoned_transform_train_index": null,
@@ -34,13 +34,13 @@
     "save_dir": "outputs",
     "batch_size": 64,
     "num_workers": 8,
-    "epochs": 10,
-    "lr": 0.001,
+    "epochs": 20,
+    "lr": 0.0003,
     "momentum": 0.9,
     "weight_decay": 0.0001,
     "schedule": [
-      5,
-      8
+      12,
+      17
     ],
     "gamma": 0.1,
     "benign_training": false,
