@@ -239,6 +239,27 @@ def build_badnets_pattern(image_size, trigger_size=3, alpha=1.0):
     return pattern, weight
 
 
+def build_blended_pattern(image_size, alpha=0.1, pattern_type='checkerboard'):
+    pattern_type = str(pattern_type).strip().lower()
+    if pattern_type == 'checkerboard':
+        block_size = max(4, image_size // 14)
+        yy, xx = torch.meshgrid(
+            torch.arange(image_size),
+            torch.arange(image_size),
+            indexing='ij',
+        )
+        pattern = (((xx // block_size + yy // block_size) % 2) * 255).to(torch.uint8)
+    elif pattern_type == 'constant':
+        pattern = torch.full((image_size, image_size), 255, dtype=torch.uint8)
+    elif pattern_type == 'random':
+        pattern = torch.randint(0, 256, (image_size, image_size), dtype=torch.int64).to(torch.uint8)
+    else:
+        raise KeyError(f'Unsupported blended_pattern_type: {pattern_type}.')
+
+    weight = torch.full((image_size, image_size), float(alpha), dtype=torch.float32)
+    return pattern, weight
+
+
 def default_trigger_size(image_size):
     if image_size <= 32:
         return 3
@@ -273,11 +294,30 @@ def prepare_attack_kwargs(name, train_dataset, test_dataset, attack_kwargs):
     image_size = infer_image_size(train_dataset)
     key = name.lower()
 
-    if key in ('badnets', 'blended'):
+    if key == 'badnets':
         trigger_size = int(prepared.pop('trigger_size', default_trigger_size(image_size)))
-        alpha = 1.0 if key == 'badnets' else float(prepared.pop('blended_alpha', 0.2))
         if prepared.get('pattern') is None or prepared.get('weight') is None:
-            pattern, weight = build_badnets_pattern(image_size=image_size, trigger_size=trigger_size, alpha=alpha)
+            pattern, weight = build_badnets_pattern(image_size=image_size, trigger_size=trigger_size, alpha=1.0)
+            prepared['pattern'] = pattern
+            prepared['weight'] = weight
+
+    if key == 'blended':
+        trigger_size = prepared.pop('trigger_size', None)
+        alpha = float(prepared.pop('blended_alpha', 0.1))
+        pattern_type = prepared.pop('blended_pattern_type', 'checkerboard')
+        if prepared.get('pattern') is None or prepared.get('weight') is None:
+            if trigger_size is None:
+                pattern, weight = build_blended_pattern(
+                    image_size=image_size,
+                    alpha=alpha,
+                    pattern_type=pattern_type,
+                )
+            else:
+                pattern, weight = build_badnets_pattern(
+                    image_size=image_size,
+                    trigger_size=int(trigger_size),
+                    alpha=alpha,
+                )
             prepared['pattern'] = pattern
             prepared['weight'] = weight
 
