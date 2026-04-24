@@ -1,0 +1,7 @@
+{
+  "defense_name": "refine",
+  "epoch": 15,
+  "loss": 0.268088161945343,
+  "metric": "train_unet_test_loss",
+  "stage": "defenses"
+}
