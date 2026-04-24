@@ -1,0 +1,25 @@
+{
+  "GPU_num": 1,
+  "attack_name": "clean",
+  "batch_size": 256,
+  "dataset_name": "cifar10",
+  "device": "GPU",
+  "epochs": 100,
+  "experiment_name": "clean_resnet18_clean",
+  "gamma": 0.1,
+  "lr": 0.1,
+  "model_name": "resnet18",
+  "momentum": 0.9,
+  "num_workers": 8,
+  "output_dir": "outputs/cifar10/clean/resnet18_clean_20260424_111303",
+  "run_timestamp": "20260424_111303",
+  "save_dir": "outputs",
+  "save_epoch_interval": 10,
+  "schedule": [
+    50,
+    75
+  ],
+  "stage": "clean",
+  "test_epoch_interval": 1,
+  "weight_decay": 0.0005
+}

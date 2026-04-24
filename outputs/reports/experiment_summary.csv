@@ -1,0 +1,4 @@
+recorded_at,stage,config_path,dataset,attack,model,defense,clean_acc,asr,train_loss,epochs,seed,run_dir,checkpoint
+2026-04-24 11:28:27,clean,configs/train_clean.cifar10.resnet18.json,cifar10,clean,resnet18,clean,0.8713999938964844,,0.001868832543402036,100,0,outputs/cifar10/clean/resnet18_clean_20260424_111303,
+2026-04-24 11:39:14,clean,configs/train_clean.gtsrb.resnet18.json,gtsrb,clean,resnet18,clean,0.9819477844238281,,0.002920407866877685,80,0,outputs/gtsrb/clean/resnet18_clean_20260424_112850,
+2026-04-24 11:55:16,clean,configs/train_clean.cub200.resnet50.pretrained.json,cub200,clean,torchvision-resnet50,clean,0.8260269927978515,,0.00462592438239842,50,0,outputs/cub200/clean/torchvision-resnet50_clean_20260424_114045,

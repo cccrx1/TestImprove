@@ -1,0 +1,9 @@
+{
+  "epoch": 50,
+  "stage": "clean",
+  "top1_accuracy": 0.8260269927978515,
+  "topk_accuracy": 0.9587504577636718,
+  "topk_eval": 5,
+  "total_num": 5794,
+  "train_loss": 0.00462592438239842
+}

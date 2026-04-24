@@ -1,0 +1,25 @@
+{
+  "GPU_num": 1,
+  "attack_name": "clean",
+  "batch_size": 64,
+  "dataset_name": "cub200",
+  "device": "GPU",
+  "epochs": 50,
+  "experiment_name": "clean_torchvision-resnet50_clean",
+  "gamma": 0.1,
+  "lr": 0.01,
+  "model_name": "torchvision-resnet50",
+  "momentum": 0.9,
+  "num_workers": 8,
+  "output_dir": "outputs/cub200/clean/torchvision-resnet50_clean_20260424_114045",
+  "run_timestamp": "20260424_114045",
+  "save_dir": "outputs",
+  "save_epoch_interval": 5,
+  "schedule": [
+    25,
+    40
+  ],
+  "stage": "clean",
+  "test_epoch_interval": 1,
+  "weight_decay": 0.0001
+}
