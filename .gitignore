@@ -16,12 +16,22 @@ env/
 .DS_Store
 Thumbs.db
 
-# Local experiment outputs
-outputs/*
+# Experiment outputs
+outputs/**
+!outputs/
+!outputs/**/
+!outputs/**/log*.txt
+!outputs/**/metrics*.json
+!outputs/**/config*.json
 !outputs/reports/
-outputs/reports/*
 !outputs/reports/.gitkeep
-!outputs/reports/experiment_results.csv
+!outputs/reports/experiment_summary.csv
+outputs/**/*.pth
+outputs/**/*.pt
+outputs/**/*.ckpt
+outputs/**/*.onnx
+outputs/**/*.npz
+outputs/**/*.npy
 results/
 runs/
 artifacts/
@@ -31,6 +41,12 @@ checkpoints/
 # Local datasets and generated assets
 datasets/
 data/
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
 
 # Local environment and machine-specific config
 .env
