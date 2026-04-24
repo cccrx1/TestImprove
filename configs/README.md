@@ -28,3 +28,10 @@ Notes:
 - You can set `dataset.image_size` to force a resize before `ToTensor()`.
 - For high-resolution datasets such as `cub200`, prefer `torchvision-resnet50` or another ImageNet-pretrained backbone over CIFAR-style backbones.
 - You can pass torchvision pretrained weights with `model.kwargs.weights`, for example `"DEFAULT"`.
+
+REFINE notes:
+
+- Defense `model.checkpoint` should point to the trained backdoored model in `outputs/<dataset>/attacks/.../ckpt_epoch_*.pth`.
+- For CUB-200 REFINE/REFINE_GC, prefer the stable settings used in prior runs: ImageNet normalization, `first_channels: 64`, `batch_size: 16`, `lr: 0.001`, schedule `[5, 8]`, `lmd: 0.05`, and `enable_label_shuffle: false`.
+- `enable_label_shuffle: false` keeps the output mapping as identity. The UNet is still trained and used; this only avoids a random 200-class output permutation on CUB-200.
+- REFINE_GC is primarily expected to help geometric attacks such as WaNet and should not be expected to improve every non-geometric attack.

@@ -134,3 +134,31 @@ outputs/
 - Attack poisoning happens via custom transform classes (AddTrigger) inserted into dataset pipelines
 - REFINE defense uses a UNet to transform inputs before feeding to the backdoored classifier
 - Label shuffling in REFINE is controlled by `enable_label_shuffle` parameter
+
+## REFINE / REFINE_GC Experiment Guardrails
+
+For research reproducibility, do not change REFINE core logic when only configuring experiments. The core logic is:
+
+- UNet input transformation before the frozen classifier
+- Optional output label mapping via `enable_label_shuffle`
+- Frozen backdoored classifier during defense training
+- REFINE objective: `cls_loss + lmd * supconloss`
+- REFINE_GC objective: `cls_loss + lmd * supconloss + grid_reg_weight * grid_loss`
+
+Avoid adding loss terms, loss rescaling, alternate prediction paths, or changes to evaluation semantics unless the user explicitly asks for a method change. Use existing config parameters first.
+
+For CUB-200, stable REFINE configs should follow the earlier successful project setup:
+
+- `enable_label_shuffle: false`
+- `lmd: 0.05`
+- `unet_kwargs.first_channels: 64`
+- `batch_size: 16`
+- `lr: 0.001`
+- LR schedule `[5, 8]`
+- ImageNet normalization in both dataset transforms and REFINE `norm_mean` / `norm_std`
+
+`enable_label_shuffle: false` uses identity output mapping. It does not disable the UNet or bypass REFINE; the UNet still learns input reprogramming, but it is not forced to learn a random 200-class output permutation.
+
+REFINE_GC adds a learnable geometric correction module before REFINE. Its expected value is strongest for geometric attacks such as WaNet. For BadNets and Blended, the goal is comparable performance to REFINE, not necessarily a large improvement. Interpret GC as improving robustness to spatial/warping triggers while preserving non-geometric defense behavior.
+
+Defense configs must point `model.checkpoint` to a trained backdoored checkpoint under `outputs/<dataset>/attacks/.../ckpt_epoch_*.pth`. Do not confuse this with the clean initialization checkpoint recorded in attack summary rows.
