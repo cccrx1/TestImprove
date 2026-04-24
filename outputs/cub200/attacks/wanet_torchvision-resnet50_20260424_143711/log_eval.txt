@@ -1,0 +1,7 @@
+==========Use GPUs to train==========
+CUDA_VISIBLE_DEVICES=0
+CUDA_SELECTED_DEVICES=0
+==========Test result on benign test dataset==========
+[2026-04-24_14:49:28] Top-1 correct / Total: 104/5794, Top-1 accuracy: 0.01794960303762513, Top-5 correct / Total: 3196/5794, Top-5 accuracy: 0.5516051087331723, mean loss: 10.1393404006958, time: 5.163144588470459
+==========Test result on poisoned test dataset==========
+[2026-04-24_14:49:35] Top-1 correct / Total: 5785/5794, Top-1 accuracy: 0.9984466689678978, Top-5 correct / Total: 5794/5794, Top-5 accuracy: 1.0, mean loss: 0.005254446994513273, time: 7.109699010848999
