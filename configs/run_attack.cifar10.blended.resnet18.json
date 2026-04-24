@@ -1,0 +1,50 @@
+{
+  "seed": 0,
+  "dataset": {
+    "name": "cifar10",
+    "root": "./datasets",
+    "download": false
+  },
+  "model": {
+    "name": "resnet18",
+    "kwargs": {},
+    "checkpoint": "./outputs/cifar10/clean/resnet18_clean_20260424_111303/ckpt_epoch_100.pth"
+  },
+  "loss": "cross_entropy",
+  "attack": {
+    "name": "blended",
+    "kwargs": {
+      "y_target": 0,
+      "poisoned_rate": 0.2,
+      "trigger_size": 5,
+      "blended_alpha": 0.15,
+      "pattern": null,
+      "weight": null,
+      "poisoned_transform_train_index": null,
+      "poisoned_transform_test_index": null,
+      "poisoned_target_transform_index": 0
+    }
+  },
+  "run_train": true,
+  "run_test": true,
+  "schedule": {
+    "save_dir": "outputs",
+    "batch_size": 256,
+    "num_workers": 8,
+    "epochs": 20,
+    "lr": 0.01,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "schedule": [
+      10,
+      15
+    ],
+    "gamma": 0.1,
+    "benign_training": false,
+    "log_iteration_interval": 100,
+    "test_epoch_interval": 1,
+    "save_epoch_interval": 5,
+    "device": "GPU",
+    "metric": "ASR"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "seed": 0,
+  "dataset": {
+    "name": "cub200",
+    "root": "./datasets/cub200",
+    "train_subdir": "train",
+    "test_subdir": "test",
+    "image_size": 224
+  },
+  "model": {
+    "name": "torchvision-resnet50",
+    "kwargs": {
+      "weights": null
+    },
+    "checkpoint": "./outputs/cub200/clean/torchvision-resnet50_clean_20260424_114045/ckpt_epoch_50.pth"
+  },
+  "loss": "cross_entropy",
+  "attack": {
+    "name": "blended",
+    "kwargs": {
+      "y_target": 0,
+      "poisoned_rate": 0.35,
+      "trigger_size": 56,
+      "blended_alpha": 0.2,
+      "pattern": null,
+      "weight": null,
+      "poisoned_transform_train_index": null,
+      "poisoned_transform_test_index": null,
+      "poisoned_target_transform_index": 0
+    }
+  },
+  "run_train": true,
+  "run_test": true,
+  "schedule": {
+    "save_dir": "outputs",
+    "batch_size": 64,
+    "num_workers": 8,
+    "epochs": 30,
+    "lr": 0.001,
+    "momentum": 0.9,
+    "weight_decay": 0.0001,
+    "schedule": [
+      20,
+      26
+    ],
+    "gamma": 0.1,
+    "benign_training": false,
+    "log_iteration_interval": 20,
+    "test_epoch_interval": 1,
+    "save_epoch_interval": 5,
+    "device": "GPU",
+    "metric": "ASR"
+  }
+}
