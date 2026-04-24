@@ -1,0 +1,129 @@
+==========Schedule parameters==========
+{'save_dir': 'outputs', 'batch_size': 256, 'num_workers': 8, 'epochs': 20, 'lr': 0.01, 'momentum': 0.9, 'weight_decay': 0.0005, 'schedule': [10, 15], 'gamma': 0.1, 'benign_training': False, 'log_iteration_interval': 100, 'test_epoch_interval': 1, 'save_epoch_interval': 5, 'device': 'GPU', 'metric': 'ASR', 'dataset_name': 'cifar10', 'model_name': 'resnet18', 'attack_name': 'badnets', 'experiment_name': 'badnets_resnet18', 'GPU_num': 1, 'run_timestamp': '20260424_121129', 'run_dir': 'outputs/cifar10/attacks/badnets_resnet18_20260424_121129'}
+==========Use GPUs to train==========
+CUDA_VISIBLE_DEVICES=0
+CUDA_SELECTED_DEVICES=0
+Total train samples: 50000
+Total test samples: 10000
+Batch size: 256
+iteration every epoch: 195
+Initial learning rate: 0.01
+[2026-04-24_12:11:34] Epoch:1/20, iteration:100/195, lr: 0.009999999776482582, loss: 0.05050058662891388, time: 4.823985815048218
+==========Test result on benign test dataset==========
+[2026-04-24_12:11:39] Top-1 correct / Total: 8565/10000, Top-1 accuracy: 0.8565, Top-5 correct / Total: 9882/10000, Top-5 accuracy: 0.9882, mean loss: 0.48151183128356934, time: 4.911514759063721
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:11:40] Top-1 correct / Total: 9718/10000, Top-1 accuracy: 0.9718, Top-5 correct / Total: 10000/10000, Top-5 accuracy: 1.0, mean loss: 0.10757064819335938, time: 5.7829039096832275
+[2026-04-24_12:11:40] Epoch:2/20, iteration:4/195, lr: 0.009999999776482582, loss: 0.010394501499831676, time: 6.212769985198975
+[2026-04-24_12:11:44] Epoch:2/20, iteration:104/195, lr: 0.009999999776482582, loss: 0.005723412614315748, time: 4.0688817501068115
+==========Test result on benign test dataset==========
+[2026-04-24_12:11:49] Top-1 correct / Total: 8594/10000, Top-1 accuracy: 0.8594, Top-5 correct / Total: 9882/10000, Top-5 accuracy: 0.9882, mean loss: 0.474356472492218, time: 4.538602590560913
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:11:50] Top-1 correct / Total: 9716/10000, Top-1 accuracy: 0.9716, Top-5 correct / Total: 10000/10000, Top-5 accuracy: 1.0, mean loss: 0.10664810240268707, time: 5.372703313827515
+[2026-04-24_12:11:50] Epoch:3/20, iteration:8/195, lr: 0.009999999776482582, loss: 0.020483363419771194, time: 5.967575311660767
+[2026-04-24_12:11:54] Epoch:3/20, iteration:108/195, lr: 0.009999999776482582, loss: 0.005222746171057224, time: 4.077345848083496
+==========Test result on benign test dataset==========
+[2026-04-24_12:11:59] Top-1 correct / Total: 8597/10000, Top-1 accuracy: 0.8597, Top-5 correct / Total: 9888/10000, Top-5 accuracy: 0.9888, mean loss: 0.4742400050163269, time: 4.3606016635894775
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:00] Top-1 correct / Total: 9745/10000, Top-1 accuracy: 0.9745, Top-5 correct / Total: 10000/10000, Top-5 accuracy: 1.0, mean loss: 0.10948444902896881, time: 5.138181447982788
+[2026-04-24_12:12:00] Epoch:4/20, iteration:12/195, lr: 0.009999999776482582, loss: 0.0038610934279859066, time: 5.911896228790283
+[2026-04-24_12:12:04] Epoch:4/20, iteration:112/195, lr: 0.009999999776482582, loss: 0.003937141038477421, time: 4.0783021450042725
+==========Test result on benign test dataset==========
+[2026-04-24_12:12:09] Top-1 correct / Total: 8587/10000, Top-1 accuracy: 0.8587, Top-5 correct / Total: 9886/10000, Top-5 accuracy: 0.9886, mean loss: 0.4721062183380127, time: 4.224215030670166
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:09] Top-1 correct / Total: 9742/10000, Top-1 accuracy: 0.9742, Top-5 correct / Total: 10000/10000, Top-5 accuracy: 1.0, mean loss: 0.11172802746295929, time: 5.012002229690552
+[2026-04-24_12:12:10] Epoch:5/20, iteration:16/195, lr: 0.009999999776482582, loss: 0.002326309448108077, time: 5.974846124649048
+[2026-04-24_12:12:14] Epoch:5/20, iteration:116/195, lr: 0.009999999776482582, loss: 0.0029912155587226152, time: 4.074856758117676
+==========Test result on benign test dataset==========
+[2026-04-24_12:12:18] Top-1 correct / Total: 8622/10000, Top-1 accuracy: 0.8622, Top-5 correct / Total: 9893/10000, Top-5 accuracy: 0.9893, mean loss: 0.46726664900779724, time: 3.9785075187683105
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:19] Top-1 correct / Total: 9745/10000, Top-1 accuracy: 0.9745, Top-5 correct / Total: 10000/10000, Top-5 accuracy: 1.0, mean loss: 0.11139480024576187, time: 4.779712438583374
+[2026-04-24_12:12:20] Epoch:6/20, iteration:20/195, lr: 0.009999999776482582, loss: 0.0031780258286744356, time: 5.951374053955078
+[2026-04-24_12:12:24] Epoch:6/20, iteration:120/195, lr: 0.009999999776482582, loss: 0.002634982345625758, time: 4.078632593154907
+==========Test result on benign test dataset==========
+[2026-04-24_12:12:28] Top-1 correct / Total: 8615/10000, Top-1 accuracy: 0.8615, Top-5 correct / Total: 9892/10000, Top-5 accuracy: 0.9892, mean loss: 0.4682478904724121, time: 3.903088092803955
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:29] Top-1 correct / Total: 9751/10000, Top-1 accuracy: 0.9751, Top-5 correct / Total: 9999/10000, Top-5 accuracy: 0.9999, mean loss: 0.10823337733745575, time: 4.81931471824646
+[2026-04-24_12:12:31] Epoch:7/20, iteration:24/195, lr: 0.009999999776482582, loss: 0.0028872848488390446, time: 6.097479820251465
+[2026-04-24_12:12:35] Epoch:7/20, iteration:124/195, lr: 0.009999999776482582, loss: 0.002246510935947299, time: 4.085168123245239
+==========Test result on benign test dataset==========
+[2026-04-24_12:12:38] Top-1 correct / Total: 8630/10000, Top-1 accuracy: 0.863, Top-5 correct / Total: 9896/10000, Top-5 accuracy: 0.9896, mean loss: 0.4682579040527344, time: 3.750530481338501
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:39] Top-1 correct / Total: 9758/10000, Top-1 accuracy: 0.9758, Top-5 correct / Total: 9999/10000, Top-5 accuracy: 0.9999, mean loss: 0.10917218029499054, time: 4.769808053970337
+[2026-04-24_12:12:41] Epoch:8/20, iteration:28/195, lr: 0.009999999776482582, loss: 0.002605305751785636, time: 6.21420955657959
+[2026-04-24_12:12:45] Epoch:8/20, iteration:128/195, lr: 0.009999999776482582, loss: 0.001786087523214519, time: 4.077454090118408
+==========Test result on benign test dataset==========
+[2026-04-24_12:12:49] Top-1 correct / Total: 8643/10000, Top-1 accuracy: 0.8643, Top-5 correct / Total: 9900/10000, Top-5 accuracy: 0.99, mean loss: 0.4633321762084961, time: 3.5685651302337646
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:49] Top-1 correct / Total: 9740/10000, Top-1 accuracy: 0.974, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.12255609035491943, time: 4.349608898162842
+[2026-04-24_12:12:51] Epoch:9/20, iteration:32/195, lr: 0.009999999776482582, loss: 0.0017332439310848713, time: 5.923290014266968
+[2026-04-24_12:12:55] Epoch:9/20, iteration:132/195, lr: 0.009999999776482582, loss: 0.0026187633629888296, time: 4.074234247207642
+==========Test result on benign test dataset==========
+[2026-04-24_12:12:58] Top-1 correct / Total: 8636/10000, Top-1 accuracy: 0.8636, Top-5 correct / Total: 9898/10000, Top-5 accuracy: 0.9898, mean loss: 0.463900625705719, time: 3.457336187362671
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:12:59] Top-1 correct / Total: 9750/10000, Top-1 accuracy: 0.975, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.1185992956161499, time: 4.308310031890869
+[2026-04-24_12:13:01] Epoch:10/20, iteration:36/195, lr: 0.009999999776482582, loss: 0.002204731572419405, time: 6.029231786727905
+[2026-04-24_12:13:05] Epoch:10/20, iteration:136/195, lr: 0.009999999776482582, loss: 0.003159163286909461, time: 4.080644369125366
+==========Test result on benign test dataset==========
+[2026-04-24_12:13:08] Top-1 correct / Total: 8623/10000, Top-1 accuracy: 0.8623, Top-5 correct / Total: 9893/10000, Top-5 accuracy: 0.9893, mean loss: 0.4643018841743469, time: 3.2462286949157715
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:13:09] Top-1 correct / Total: 9759/10000, Top-1 accuracy: 0.9759, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11052998155355453, time: 4.090885162353516
+[2026-04-24_12:13:11] Epoch:11/20, iteration:40/195, lr: 0.0010000000474974513, loss: 0.0015875190729275346, time: 6.071285247802734
+[2026-04-24_12:13:15] Epoch:11/20, iteration:140/195, lr: 0.0010000000474974513, loss: 0.0015510916709899902, time: 4.083029270172119
+==========Test result on benign test dataset==========
+[2026-04-24_12:13:18] Top-1 correct / Total: 8638/10000, Top-1 accuracy: 0.8638, Top-5 correct / Total: 9897/10000, Top-5 accuracy: 0.9897, mean loss: 0.46148982644081116, time: 3.2038447856903076
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:13:19] Top-1 correct / Total: 9753/10000, Top-1 accuracy: 0.9753, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11903329193592072, time: 4.133393287658691
+[2026-04-24_12:13:21] Epoch:12/20, iteration:44/195, lr: 0.0010000000474974513, loss: 0.0023907842114567757, time: 6.129778623580933
+[2026-04-24_12:13:25] Epoch:12/20, iteration:144/195, lr: 0.0010000000474974513, loss: 0.002091878792271018, time: 4.085718631744385
+==========Test result on benign test dataset==========
+[2026-04-24_12:13:28] Top-1 correct / Total: 8638/10000, Top-1 accuracy: 0.8638, Top-5 correct / Total: 9902/10000, Top-5 accuracy: 0.9902, mean loss: 0.46041813492774963, time: 2.9794716835021973
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:13:29] Top-1 correct / Total: 9755/10000, Top-1 accuracy: 0.9755, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11733777821063995, time: 3.8758440017700195
+[2026-04-24_12:13:32] Epoch:13/20, iteration:48/195, lr: 0.0010000000474974513, loss: 0.002198476344347, time: 6.10868239402771
+[2026-04-24_12:13:36] Epoch:13/20, iteration:148/195, lr: 0.0010000000474974513, loss: 0.0016278211260214448, time: 4.086731195449829
+==========Test result on benign test dataset==========
+[2026-04-24_12:13:38] Top-1 correct / Total: 8644/10000, Top-1 accuracy: 0.8644, Top-5 correct / Total: 9896/10000, Top-5 accuracy: 0.9896, mean loss: 0.45893120765686035, time: 2.710761070251465
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:13:39] Top-1 correct / Total: 9748/10000, Top-1 accuracy: 0.9748, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.12442866712808609, time: 3.4672374725341797
+[2026-04-24_12:13:41] Epoch:14/20, iteration:52/195, lr: 0.0010000000474974513, loss: 0.0018563922494649887, time: 5.854291915893555
+[2026-04-24_12:13:46] Epoch:14/20, iteration:152/195, lr: 0.0010000000474974513, loss: 0.0023301069159060717, time: 4.096998929977417
+==========Test result on benign test dataset==========
+[2026-04-24_12:13:48] Top-1 correct / Total: 8658/10000, Top-1 accuracy: 0.8658, Top-5 correct / Total: 9898/10000, Top-5 accuracy: 0.9898, mean loss: 0.4592282176017761, time: 2.6361823081970215
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:13:49] Top-1 correct / Total: 9751/10000, Top-1 accuracy: 0.9751, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11958234012126923, time: 3.461764097213745
+[2026-04-24_12:13:52] Epoch:15/20, iteration:56/195, lr: 0.0010000000474974513, loss: 0.0021712537854909897, time: 6.087804794311523
+[2026-04-24_12:13:56] Epoch:15/20, iteration:156/195, lr: 0.0010000000474974513, loss: 0.0016289911000058055, time: 4.0821692943573
+==========Test result on benign test dataset==========
+[2026-04-24_12:13:58] Top-1 correct / Total: 8641/10000, Top-1 accuracy: 0.8641, Top-5 correct / Total: 9898/10000, Top-5 accuracy: 0.9898, mean loss: 0.45978349447250366, time: 2.372044563293457
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:13:59] Top-1 correct / Total: 9749/10000, Top-1 accuracy: 0.9749, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.12249892950057983, time: 3.317115545272827
+[2026-04-24_12:14:02] Epoch:16/20, iteration:60/195, lr: 0.00010000000474974513, loss: 0.00152180518489331, time: 6.117900848388672
+[2026-04-24_12:14:06] Epoch:16/20, iteration:160/195, lr: 0.00010000000474974513, loss: 0.0020562850404530764, time: 4.076258420944214
+==========Test result on benign test dataset==========
+[2026-04-24_12:14:08] Top-1 correct / Total: 8646/10000, Top-1 accuracy: 0.8646, Top-5 correct / Total: 9900/10000, Top-5 accuracy: 0.99, mean loss: 0.46180859208106995, time: 2.3789255619049072
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:14:09] Top-1 correct / Total: 9758/10000, Top-1 accuracy: 0.9758, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11555397510528564, time: 3.385270118713379
+[2026-04-24_12:14:12] Epoch:17/20, iteration:64/195, lr: 0.00010000000474974513, loss: 0.0016313705127686262, time: 6.376884698867798
+[2026-04-24_12:14:16] Epoch:17/20, iteration:164/195, lr: 0.00010000000474974513, loss: 0.0018044597236439586, time: 4.086472034454346
+==========Test result on benign test dataset==========
+[2026-04-24_12:14:19] Top-1 correct / Total: 8643/10000, Top-1 accuracy: 0.8643, Top-5 correct / Total: 9902/10000, Top-5 accuracy: 0.9902, mean loss: 0.4601021707057953, time: 2.1400656700134277
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:14:19] Top-1 correct / Total: 9753/10000, Top-1 accuracy: 0.9753, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.12162312120199203, time: 2.920090913772583
+[2026-04-24_12:14:22] Epoch:18/20, iteration:68/195, lr: 0.00010000000474974513, loss: 0.001981690526008606, time: 5.952580690383911
+[2026-04-24_12:14:26] Epoch:18/20, iteration:168/195, lr: 0.00010000000474974513, loss: 0.0015157356392592192, time: 4.085638761520386
+==========Test result on benign test dataset==========
+[2026-04-24_12:14:28] Top-1 correct / Total: 8652/10000, Top-1 accuracy: 0.8652, Top-5 correct / Total: 9900/10000, Top-5 accuracy: 0.99, mean loss: 0.46139949560165405, time: 1.9193739891052246
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:14:29] Top-1 correct / Total: 9754/10000, Top-1 accuracy: 0.9754, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11881519854068756, time: 2.7269129753112793
+[2026-04-24_12:14:32] Epoch:19/20, iteration:72/195, lr: 0.00010000000474974513, loss: 0.0015526131028309464, time: 5.971347093582153
+[2026-04-24_12:14:36] Epoch:19/20, iteration:172/195, lr: 0.00010000000474974513, loss: 0.001771233044564724, time: 4.076582193374634
+==========Test result on benign test dataset==========
+[2026-04-24_12:14:38] Top-1 correct / Total: 8636/10000, Top-1 accuracy: 0.8636, Top-5 correct / Total: 9898/10000, Top-5 accuracy: 0.9898, mean loss: 0.46150994300842285, time: 1.823486566543579
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:14:39] Top-1 correct / Total: 9755/10000, Top-1 accuracy: 0.9755, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.1166980043053627, time: 2.7126433849334717
+[2026-04-24_12:14:43] Epoch:20/20, iteration:76/195, lr: 0.00010000000474974513, loss: 0.0015642261132597923, time: 6.107847452163696
+[2026-04-24_12:14:47] Epoch:20/20, iteration:176/195, lr: 0.00010000000474974513, loss: 0.001860273303464055, time: 4.076983451843262
+==========Test result on benign test dataset==========
+[2026-04-24_12:14:48] Top-1 correct / Total: 8638/10000, Top-1 accuracy: 0.8638, Top-5 correct / Total: 9896/10000, Top-5 accuracy: 0.9896, mean loss: 0.4622911810874939, time: 1.5649724006652832
+==========Test result on poisoned test dataset==========
+[2026-04-24_12:14:49] Top-1 correct / Total: 9758/10000, Top-1 accuracy: 0.9758, Top-5 correct / Total: 9998/10000, Top-5 accuracy: 0.9998, mean loss: 0.11635103076696396, time: 2.3201334476470947
